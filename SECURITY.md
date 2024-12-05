@@ -18,7 +18,7 @@ Please ensure you are using the latest version within the supported range to rec
 If you discover a security vulnerability in this package, please follow the steps below to report it:
 
 1. **Do not disclose publicly:** Avoid sharing vulnerability details on public platforms (e.g., forums, social media).
-2. **Contact the maintainers privately:** Email us at **security@example.com** with details of the issue, including:
+2. **Contact the maintainers privately:** Email us at **xsaven@gmail.com** with details of the issue, including:
     - A clear description of the vulnerability.
     - Steps to reproduce the issue, if applicable.
     - The potential impact on applications using this package.
