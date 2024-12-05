@@ -1,0 +1,12 @@
+<?php
+
+namespace {{ dtoNamespace }};
+
+use Bfg\Dto\Dto;
+
+class {{ dto }}Dto extends Dto
+{
+    public function __construct(
+        //
+    ) {}
+}
