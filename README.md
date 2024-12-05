@@ -81,7 +81,7 @@ php artisan make:dto UserDto
     * [getRelationNames](#getRelationNames)
     * [getPropertyNames](#getPropertyNames)
     * [getNames](#getNames)
-    * [getReflection](#getReflection)
+    * [getReflection](#getreflection)
 * [Convert DTO to](#convert-dto-to)
     * [ToArray](#toArray)
     * [ToJson](#ToJson)
