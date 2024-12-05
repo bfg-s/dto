@@ -18,6 +18,84 @@ php artisan make:dto UserDto
 ```
 
 ## Usage
+
+* [First steps](#first-steps)
+* [Constructors](#constructors)
+    * [fromEmpty](#fromempty)
+    * [fromArray](#fromarray)
+    * [fromRequest](#fromrequest)
+    * [fromJson](#fromjson)
+    * [fromSerialize](#fromserialize)
+    * [fromModel](#frommodel)
+    * [fromStaticCache](#fromstaticcache)
+    * [fromCollection](#fromcollection)
+    * [fromCache](#fromcache)
+* [Nested DTO calls](#nested-dto-calls)
+* [Binding](#binding)
+    * [Binding to the model](#binding-to-the-model)
+    * [Binding to the Carbon](#binding-to-the-carbon)
+* [Property casting](#property-casting)
+* [Property hidden](#property-hidden)
+* [Property rules](#property-rules)
+* [Property encrypted](#property-encrypted)
+* [Property mutations](#property-mutations)
+* [Computed properties](#computed-properties)
+* [Lazy properties](#lazy-properties)
+* [Method property access](#method-property-access)
+* [Collection hinting](#collection-hinting)
+* [Property by method with](#property-by-method-with)
+* [Property logsEnabled](#property-logsenabled)
+* [Meta](#meta)
+* [Attributes](#attributes)
+    * [DtoName](#dtoname)
+    * [DtoFromConfig](#dtofromconfig)
+    * [DtoFromRequest](#dtofromrequest)
+    * [DtoFromRoute](#dtofromroute)
+    * [DtoFromCache](#dtofromcache)
+    * [DtoToResource](#dtotoresource)
+* [Events](#events)
+    * [creating](#creating)
+    * [created](#created)
+    * [updating](#updating)
+    * [updated](#updated)
+    * [mutating](#mutating)
+    * [mutated](#mutated)
+    * [serialize](#serialize)
+    * [unserialize](#unserialize)
+    * [clone](#clone)
+    * [fromModel](#fromModel)
+    * [fromEmpty](#fromEmpty)
+    * [fromArray](#fromArray)
+    * [fromRequest](#fromRequest)
+    * [fromJson](#fromJson)
+    * [fromSerialize](#fromSerialize)
+    * [prepareModel](#prepareModel)
+    * [prepareSerialize](#prepareSerialize)
+    * [prepareJson](#prepareJson)
+    * [prepareRequest](#prepareRequest)
+    * [prepareArray](#prepareArray)
+* [Reflection](#reflection)
+    * [explain](#explain)
+    * [vars](#vars)
+    * [getModifiedFields](#getModifiedFields)
+    * [getRelationNames](#getRelationNames)
+    * [getPropertyNames](#getPropertyNames)
+    * [getNames](#getNames)
+    * [getReflection](#getReflection)
+* [Convert DTO to](#convert-dto-to)
+    * [Array](#array)
+    * [Json](#json)
+    * [Response](#response)
+    * [Collection](#collection)
+    * [Base64](#base64)
+    * [Model](#model)
+    * [String](#string)
+* [DTO Collection](#dto-collection)
+    * [saveToDatabase](#saveToDatabase)
+    * [saveToModel](#saveToModel)
+* [Helpers](#helpers)
+
+### First steps
 Before you can use the DTO, you need to create a new class that extends the `Bfg\Dto\Dto` class.
 All you dto properties must be public and have a type hint.
 Also you must use the constructor for the DTO. And you can use the dependency injection in the constructor.
@@ -1451,7 +1529,6 @@ You can use the `isNotInstanceOfArray` helper for checking the DTO is property n
 ```php
 $dto->isNotInstanceOfArray('addresses', AddressDto::class);
 ```
-
 
 ### Default Laravel Support
 DTO class use a famous Laravel support, such as `Illuminate\Support\Traits\Conditionable`, `Illuminate\Support\Traits\Dumpable`, 
