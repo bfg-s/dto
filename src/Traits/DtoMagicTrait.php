@@ -105,14 +105,6 @@ trait DtoMagicTrait
     }
 
     /**
-     * @return string
-     */
-    public function toString(): string
-    {
-        return $this->__toString();
-    }
-
-    /**
      * Serialize the object.
      *
      * @return array

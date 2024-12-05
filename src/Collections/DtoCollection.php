@@ -13,7 +13,7 @@ class DtoCollection extends Collection
      * @param  string  $table
      * @return bool
      */
-    public function saveToDatabase(string $table): bool
+    public function insertToDatabase(string $table): bool
     {
         return DB::table($table)->insert($this->toArray());
     }
@@ -24,7 +24,7 @@ class DtoCollection extends Collection
      * @param  string  $model
      * @return bool
      */
-    public function saveToModel(string $model): bool
+    public function insertToModel(string $model): bool
     {
         if (! is_subclass_of($model, \Illuminate\Database\Eloquent\Model::class)) {
             return false;

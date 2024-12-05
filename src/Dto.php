@@ -20,6 +20,8 @@ use Bfg\Dto\Traits\DtoToCollectionTrait;
 use Bfg\Dto\Traits\DtoToJsonTrait;
 use Bfg\Dto\Traits\DtoToModelTrait;
 use Bfg\Dto\Traits\DtoToResponseTrait;
+use Bfg\Dto\Traits\DtoToSerializeTrait;
+use Bfg\Dto\Traits\DtoToStringTrait;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Traits\Conditionable;
@@ -63,8 +65,10 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess
     use DtoLogTrait;
 
     use DtoToCollectionTrait;
+    use DtoToSerializeTrait;
     use DtoToResponseTrait;
     use DtoToBase64Trait;
+    use DtoToStringTrait;
     use DtoToArrayTrait;
     use DtoToModelTrait;
     use DtoToJsonTrait;

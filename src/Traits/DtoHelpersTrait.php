@@ -40,7 +40,7 @@ trait DtoHelpersTrait
      */
     public function cache(\DateTimeInterface|\DateInterval|int|null $ttl = null): static
     {
-        Cache::put(static::class, $this->serialize(), $ttl);
+        Cache::put(static::class, $this->toSerialize(), $ttl);
 
         return $this;
     }
@@ -130,16 +130,6 @@ trait DtoHelpersTrait
     public function equals(Dto $dto): bool
     {
         return $this->toArray() === $dto->toArray();
-    }
-
-    /**
-     * Serialize the instance to a string.
-     *
-     * @return string
-     */
-    public function serialize(): string
-    {
-        return serialize($this);
     }
 
     /**

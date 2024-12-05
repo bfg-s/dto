@@ -89,10 +89,11 @@ php artisan make:dto UserDto
     * [Collection](#collection)
     * [Base64](#base64)
     * [Model](#model)
+    * [Serialize](#serialize)
     * [String](#string)
 * [DTO Collection](#dto-collection)
-    * [saveToDatabase](#saveToDatabase)
-    * [saveToModel](#saveToModel)
+    * [insertToDatabase](#insertToDatabase)
+    * [insertToModel](#insertToModel)
 * [Helpers](#helpers)
 
 ### First steps
@@ -1123,43 +1124,49 @@ $dto->getReflection();
 
 ### Convert DTO to
 
-#### Array
+#### ToArray
 You can convert DTO to array.
 ```php
 $dto->toArray();
 ```
 
-#### Json
+#### ToJson
 You can convert DTO to json.
 ```php
 $dto->toJson($options = 0);
 ```
 
-#### Response
+#### ToResponse
 You can convert DTO to response.
 ```php
 $dto->toResponse(int $status = 200, array $headers = [], int $options = 0);
 ```
 
-#### Collection
+#### ToCollection
 You can convert DTO to collection.
 ```php
 $dto->toCollection();
 ```
 
-#### Base64
+#### ToBase64
 You can convert DTO to base64.
 ```php
 $dto->toBase64();
 ```
 
-#### Model
+#### ToModel
 You can convert DTO to model.
 ```php
 $dto->toModel(User::class);
 ```
 
-#### String
+#### ToSerialize
+You can convert DTO to serialize.
+```php
+$dto->toSerialize();
+```
+
+#### ToString
 You can convert DTO to string.
 ```php
 $dto->toString();
@@ -1170,7 +1177,7 @@ echo (string) $dto;
 
 ### DTO Collection
 Dto collection have couple additional methods.
-#### saveToDatabase
+#### insertToDatabase
 For save collection to database you can use `saveToDatabase` method.
 ```php
 $collection = UserDto::fromCollection([
@@ -1178,9 +1185,9 @@ $collection = UserDto::fromCollection([
     ['name' => 'Sam Doe', 'email' => 'sam@gmail.com', 'password' => '123456'],
 ]);
 
-$collection->saveToDatabase('users');
+$collection->insertToDatabase('users');
 ```
-#### saveToModel
+#### insertToModel
 For save collection to model you can use `saveToModel` method.
 ```php
 $collection = UserDto::fromCollection([
@@ -1188,7 +1195,7 @@ $collection = UserDto::fromCollection([
     ['name' => 'Sam Doe', 'email' => 'sam@gmail.com', 'password' => '123456'],
 ]);
 
-$collection->saveToModel(\App\Models\User::class);
+$collection->insertToModel(\App\Models\User::class);
 ```
 
 ### Helpers
@@ -1264,12 +1271,6 @@ $dto->equals(UserDto::fromArray([
     'email' => 'test@gmail.com',
     'password' => '123456',
 ])); // bool
-```
-
-#### serialize
-You can use the `serialize` helper for serializing the DTO.
-```php
-$dto->serialize();
 ```
 
 #### fill
