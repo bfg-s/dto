@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bfg\Dto\Traits;
 
 trait DtoMetaTrait
@@ -16,6 +18,9 @@ trait DtoMetaTrait
             static::$__meta[static::class][spl_object_id($this)] ?? [],
             $meta
         );
+
+        $this->log('setMeta', $meta);
+
         return $this;
     }
 
@@ -28,6 +33,7 @@ trait DtoMetaTrait
     public function unsetMeta(string $key): static
     {
         unset(static::$__meta[static::class][spl_object_id($this)][$key]);
+        $this->log('unsetMeta', compact('key'));
         return $this;
     }
 

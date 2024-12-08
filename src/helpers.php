@@ -22,3 +22,20 @@ if (! function_exists('enum_value')) {
         }, $default ?? $value);
     }
 }
+
+if (! function_exists('is_assoc')) {
+    /**
+     * Determine if the given value is an associative array.
+     *
+     * @param  array  $array
+     * @return bool
+     */
+    function is_assoc(array $array): bool
+    {
+        if ([] === $array) {
+            return false;
+        }
+
+        return array_keys($array) !== range(0, count($array) - 1);
+    }
+}

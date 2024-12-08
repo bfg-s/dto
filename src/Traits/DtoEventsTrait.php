@@ -1,14 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bfg\Dto\Traits;
 
-use Bfg\Dto\Dto;
 use Bfg\Dto\Exceptions\DtoEventNotFoundException;
 
 trait DtoEventsTrait
 {
     const SET_CURRENT_DATA = '__data__';
 
+    /**
+     * @return void
+     */
+    public static function clearEvents(): void
+    {
+        static::$__events[static::class] = [];
+    }
+
+    /**
+     * @return void
+     */
+    public static function clearGlobalEvents(): void
+    {
+        static::$__events['global'] = [];
+    }
     /**
      * @param  string|array  $event
      * @param  callable  $callback

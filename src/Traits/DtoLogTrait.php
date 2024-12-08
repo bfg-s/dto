@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bfg\Dto\Traits;
 
 use Bfg\Dto\Default\LogsDto;
@@ -12,9 +14,9 @@ trait DtoLogTrait
      *
      * @param  string  $message
      * @param  array  $context
-     * @return void
+     * @return \Bfg\Dto\Dto
      */
-    public function log(string $message, array $context = []): void
+    public function log(string $message, array $context = []): static
     {
         if (static::$logsEnabled) {
 
@@ -24,6 +26,8 @@ trait DtoLogTrait
                 'timestamp' => now(),
             ];
         }
+
+        return $this;
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bfg\Dto\Traits;
 
+use App\Dto\UserDto;
 use Bfg\Dto\Attributes\DtoFromCache;
 use Bfg\Dto\Attributes\DtoFromConfig;
 use Bfg\Dto\Attributes\DtoFromRequest;
@@ -11,6 +12,7 @@ use Bfg\Dto\Attributes\DtoFromRoute;
 use Bfg\Dto\Attributes\DtoName;
 use Bfg\Dto\Collections\DtoCollection;
 use Bfg\Dto\Dto;
+use Bfg\Dto\Exceptions\DtoExtensionTypeNotFoundException;
 use Bfg\Dto\Exceptions\DtoModelBindingFailException;
 use Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException;
 use Bfg\Dto\Exceptions\DtoValidationException;
@@ -45,12 +47,36 @@ trait DtoSystemTrait
                 throw new DtoValidationException($validator);
             }
         }
-
+        $created = [];
         foreach (static::getConstructorParameters() as $parameter) {
 
             [$name, $value] = static::createNameValueFromProperty($parameter, $data);
 
             $arguments[$name] = $value;
+            $created[$name] = $name;
+        }
+
+        foreach (static::$extends as $key => $types) {
+
+            if (array_key_exists($key, $arguments)) {
+                continue;
+            }
+
+            $types = is_array($types) ? $types : explode('|', $types);
+
+            [$name, $value] = static::createNameValueFromExtendedProperty($key, $types, $data);
+
+            $arguments[$name] = $value;
+        }
+
+        foreach (static::$encrypted as $key) {
+
+            if (array_key_exists($key, $arguments)) {
+                try {
+                    $arguments[$key]
+                        = static::currentEncrypter()->decrypt($arguments[$key]);
+                } catch (\Throwable) {}
+            }
         }
 
         foreach ($arguments as $key => $argument) {
@@ -59,16 +85,74 @@ trait DtoSystemTrait
 
         $arguments = static::fireEvent('creating', $arguments, static::SET_CURRENT_DATA);
 
-        $dto = new static(...$arguments);
+        $extendedKeys = array_filter(array_keys(static::$extends), fn ($key) => ! isset($created[$key]));
+
+        $argumentsToInstance = array_diff_key($arguments, array_flip($extendedKeys));
+
+        $dto = new static(...$argumentsToInstance);
+
+        static::$__parameters[static::class][spl_object_id($dto)]
+            = array_intersect_key($arguments, array_flip($extendedKeys));
 
         foreach ($arguments as $key => $argument) {
             $dto::$__setWithoutCasting = true;
             $dto->set($key, $argument);
         }
 
-        static::$__originals[static::class][spl_object_id($dto)] = $dto->vars();
+        static::$__originals[static::class][spl_object_id($dto)] = $data;
 
         return [$dto, $arguments];
+    }
+
+    /**
+     * Make property from extended property
+     *
+     * @param  string  $key
+     * @param  array  $types
+     * @param  array  $data
+     * @return array
+     * @throws \Bfg\Dto\Exceptions\DtoModelBindingFailException
+     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
+     */
+    protected static function createNameValueFromExtendedProperty(string $key, array $types, array $data): array
+    {
+        $type = $types[0];
+        if (! $type) {
+            throw new DtoExtensionTypeNotFoundException();
+        }
+        $isBuiltin = in_array($type, ['string', 'int', 'float', 'bool', 'array', 'object', 'null', 'mixed', 'callable', 'iterable', 'false', 'true', 'resource']);
+        $isNullable = in_array('null', $types);
+        $hasCollection = in_array(Collection::class, $types);
+        $hasArray = in_array('array', $types);
+
+
+        [$nameInData, $notFoundKeys, $isOtherParam, $data] = static::detectAttributesForExtended($data, $key);
+
+        if (! $isBuiltin && ! $isOtherParam && class_exists($type)) {
+
+            if (is_subclass_of($type, Dto::class)) {
+                $value = static::discoverDtoValue($hasCollection, $hasArray, $nameInData, $type, $data, $isNullable);
+            } else {
+                if (is_subclass_of($type, Model::class)) {
+                    $value = static::discoverModelValue($nameInData, $type, $data, $isNullable);
+                } else {
+                    $value = static::discoverOtherValue($nameInData, $type, $data);
+                }
+            }
+        } else {
+            $value = $data[$nameInData] ?? null;
+        }
+
+        if (! $isNullable && $value === null) {
+            throw new DtoUndefinedArrayKeyException($nameInData . ($notFoundKeys ? ', ' . implode(', ', $notFoundKeys) : ''));
+        }
+
+        $value = static::castAttribute($key, $value, $data, $type);
+
+        $value = static::fireEvent(['created', $key], $value, static::SET_CURRENT_DATA, $data, compact('key', 'types'));
+        $value = static::transformAttribute($key, $value);
+
+        return [$key, $value];
     }
 
     /**
@@ -97,10 +181,10 @@ trait DtoSystemTrait
             $class = $type->getName();
 
             if (is_subclass_of($class, Dto::class)) {
-                $value = static::discoverDtoValue($hasCollection, $hasArray, $nameInData, $class, $data, $parameter);
+                $value = static::discoverDtoValue($hasCollection, $hasArray, $nameInData, $class, $data, $parameter->allowsNull());
             } else {
                 if (is_subclass_of($class, Model::class)) {
-                    $value = static::discoverModelValue($nameInData, $class, $data, $parameter);
+                    $value = static::discoverModelValue($nameInData, $class, $data, $parameter->allowsNull());
                 } else {
                     $value = static::discoverOtherValue($nameInData, $class, $data);
                 }
@@ -172,26 +256,97 @@ trait DtoSystemTrait
         $attributes = $parameter->getAttributes(DtoFromRoute::class);
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
-            $data[$nameInData] = request()->route($instance->name ?: $nameInData);
+            if (! array_key_exists($nameInData, $data) || ! $data[$nameInData]) {
+                $data[$nameInData] = request()->route($instance->name ?: $nameInData);
+            }
             $isOtherParam = true;
         }
         $attributes = $parameter->getAttributes(DtoFromConfig::class);
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
-            $data[$nameInData] = config($instance->name ?: $nameInData);
+            if (! array_key_exists($nameInData, $data) || ! $data[$nameInData]) {
+                $data[$nameInData] = config($instance->name ?: $nameInData);
+            }
             $isOtherParam = true;
         }
         $attributes = $parameter->getAttributes(DtoFromRequest::class);
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
-            $data[$nameInData] = request()->__get($instance->name ?: $nameInData);
+            if (! array_key_exists($nameInData, $data) || ! $data[$nameInData]) {
+                $data[$nameInData] = request()->__get($instance->name ?: $nameInData);
+            }
             $isOtherParam = true;
         }
         $attributes = $parameter->getAttributes(DtoFromCache::class);
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
-            $data[$nameInData] = Cache::get($instance->name ?: $nameInData);
+            if (! array_key_exists($nameInData, $data) || ! $data[$nameInData]) {
+                $data[$nameInData] = Cache::get($instance->name ?: $nameInData);
+            }
             $isOtherParam = true;
+        }
+
+        return [$nameInData, $notFoundKeys, $isOtherParam, $data];
+    }
+
+    protected static function detectAttributesForExtended(
+        array $data,
+        string $nameInData,
+    ): array {
+        $property = (new \ReflectionProperty(static::class, 'extends'));
+        $notFoundKeys = [];
+        $isOtherParam = false;
+        $key = $nameInData;
+        $attributes = $property->getAttributes(DtoName::class);
+        foreach ($attributes as $attribute) {
+            $instance = $attribute->newInstance();
+            if ($instance->from === $key) {
+                if (array_key_exists($instance->name, $data)) {
+                    $nameInData = $instance->name;
+                } else {
+                    $notFoundKeys[] = $instance->name;
+                }
+            }
+        }
+        $attributes = $property->getAttributes(DtoFromRoute::class);
+        foreach ($attributes as $attribute) {
+            $instance = $attribute->newInstance();
+            if ($instance->from === $key) {
+                if (! array_key_exists($nameInData, $data) || ! $data[$nameInData]) {
+                    $data[$nameInData] = request()->route($instance->name ?: $nameInData);
+                }
+                $isOtherParam = true;
+            }
+        }
+        $attributes = $property->getAttributes(DtoFromConfig::class);
+        foreach ($attributes as $attribute) {
+            $instance = $attribute->newInstance();
+            if ($instance->from === $key) {
+                if (! array_key_exists($nameInData, $data) || ! $data[$nameInData]) {
+                    $data[$nameInData] = config($instance->name ?: $nameInData);
+                }
+                $isOtherParam = true;
+            }
+        }
+        $attributes = $property->getAttributes(DtoFromRequest::class);
+        foreach ($attributes as $attribute) {
+            $instance = $attribute->newInstance();
+            if ($instance->from === $key) {
+                if (! array_key_exists($nameInData, $data) || ! $data[$nameInData]) {
+                    $data[$nameInData] = request()->__get($instance->name ?: $nameInData);
+                }
+                $isOtherParam = true;
+            }
+        }
+        $attributes = $property->getAttributes(DtoFromCache::class);
+        foreach ($attributes as $attribute) {
+            $instance = $attribute->newInstance();
+            if ($instance->from === $key) {
+                if (! array_key_exists($nameInData, $data) || ! $data[$nameInData]) {
+                    $data[$nameInData] = Cache::get($instance->name ?: $nameInData);
+                }
+                $isOtherParam = true;
+            }
         }
 
         return [$nameInData, $notFoundKeys, $isOtherParam, $data];
@@ -217,7 +372,11 @@ trait DtoSystemTrait
             ) {
                 $value = isset($data[$nameInData]) ? new $class($data[$nameInData]) : app($class);
             } else {
-                $value = app($class);
+                if (! enum_exists($class)) {
+                    $value = app($class);
+                } else {
+                    $value = $data[$nameInData] ?? null;
+                }
             }
         } else {
             $value = $data[$nameInData] ?? null;
@@ -226,7 +385,7 @@ trait DtoSystemTrait
 
                 if (is_numeric($value)) {
                     $value = Carbon::createFromTimestamp($value);
-                } else {
+                } else if ($value) {
                     $value = Carbon::parse($value);
                 }
             }
@@ -249,25 +408,25 @@ trait DtoSystemTrait
         string $nameInData,
         Model|string $class,
         array $data,
-        ReflectionParameter $parameter,
+        bool $allowsNull,
     ): mixed {
         $val = $data[$nameInData] ?? null;
         if (is_numeric($val)) {
             $value = $class::find($val);
-            if (! $value && ! $parameter->allowsNull()) {
+            if (! $value && ! $allowsNull) {
                 throw new DtoModelBindingFailException($class, 'id', $val);
             }
         } else if (is_string($val)) {
             $exploded = explode(':', $val);
             if (count($exploded) === 2) {
                 $value = $class::where($exploded[0], $exploded[1])->first();
-                if (! $value && ! $parameter->allowsNull()) {
+                if (! $value && ! $allowsNull) {
                     throw new DtoModelBindingFailException($class, $exploded[0], $exploded[1]);
                 }
             } else {
                 $firstFieldFromFillable = (new $class)->getFillable()[0] ?? 'id';
                 $value = $class::where($firstFieldFromFillable, $val)->first();
-                if (! $value && ! $parameter->allowsNull()) {
+                if (! $value && ! $allowsNull) {
                     throw new DtoModelBindingFailException($class, $firstFieldFromFillable, $val);
                 }
             }
@@ -288,7 +447,7 @@ trait DtoSystemTrait
      * @param  string  $nameInData
      * @param  Dto|string  $class
      * @param  array  $data
-     * @param  \ReflectionParameter  $parameter
+     * @param  bool  $allowsNull
      * @return mixed
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -298,20 +457,20 @@ trait DtoSystemTrait
         string $nameInData,
         Dto|string $class,
         array $data,
-        ReflectionParameter $parameter,
+        bool $allowsNull,
     ): mixed {
         if ($hasCollection) {
             $value = new DtoCollection();
             foreach ($data[$nameInData] ?? [] as $item) {
-                $value->push($class::fromArray($item));
+                $value->push($class::fromAnything($item));
             }
         } else if ($hasArray) {
-            $value = $parameter->allowsNull() ? null : [];
+            $value = $allowsNull ? null : [];
             foreach ($data[$nameInData] ?? [] as $item) {
-                $value[] = $class::fromArray($item);
+                $value[] = $class::fromAnything($item);
             }
         } else {
-            $value = isset($data[$nameInData]) ? $class::fromArray($data[$nameInData]) : null;
+            $value = isset($data[$nameInData]) ? $class::fromAnything($data[$nameInData]) : null;
         }
 
         return $value;
@@ -356,7 +515,7 @@ trait DtoSystemTrait
         if ($data === '') {
             return false;
         }
-        return preg_match('/^(?:\{.*\}|\[.*\])$/s', $data);
+        return !! preg_match('/^(?:\{.*\}|\[.*\])$/s', $data);
     }
 
     protected static function isSerialize(string $data): bool
@@ -377,21 +536,21 @@ trait DtoSystemTrait
         return false;
     }
 
-    protected static function makeValueByType(string $type): mixed
+    protected static function makeValueByType(string $type, array $types = []): mixed
     {
         $value = null;
 
-        if ($type === 'string') {
+        if ($type === 'string' || in_array('string', $types)) {
             $value = "";
-        } else if ($type === 'int') {
+        } else if ($type === 'int' || in_array('int', $types)) {
             $value = 0;
-        } else if ($type === 'float') {
+        } else if ($type === 'float' || in_array('float', $types)) {
             $value = 0.0;
-        } else if ($type === 'bool') {
+        } else if ($type === 'bool' || in_array('bool', $types)) {
             $value = false;
-        } else if ($type === 'array') {
+        } else if ($type === 'array' || in_array('array', $types)) {
             $value = [];
-        } else if ($type === 'object') {
+        } else if ($type === 'object' || in_array('object', $types)) {
             $value = new \stdClass();
         }
 
@@ -414,6 +573,16 @@ trait DtoSystemTrait
      * @return array
      */
     protected static function ruleMessages(): array
+    {
+        return [];
+    }
+
+    /**
+     * The headers in the method for from get request
+     *
+     * @return array
+     */
+    protected static function getHeaders(): array
     {
         return [];
     }

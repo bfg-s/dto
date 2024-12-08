@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bfg\Dto\Traits;
 
 use Illuminate\Contracts\Encryption\Encrypter;
@@ -128,4 +130,25 @@ trait DtoSystemVariablesTrait
      * @var array
      */
     protected static array $__constructorParameters = [];
+
+    /**
+     * Marker for strict to array
+     *
+     * @var bool
+     */
+    protected static bool $__strictToArray = false;
+
+    /**
+     * Extended list parameters
+     *
+     * @var array
+     */
+    protected static array $__parameters = [];
+
+    /**
+     * The cache of instances
+     *
+     * @var array
+     */
+    protected static array $__cache = [];
 }

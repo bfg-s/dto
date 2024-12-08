@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bfg\Dto;
 
 use ArrayAccess;
@@ -84,6 +86,13 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess
      * @var string
      */
     protected static string $version = '1.0';
+
+    /**
+     * The extends properties
+     *
+     * @var array
+     */
+    protected static array $extends = [];
 
     /**
      * Dto cast properties.

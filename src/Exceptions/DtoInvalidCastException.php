@@ -36,7 +36,7 @@ class DtoInvalidCastException extends RuntimeException
      */
     public function __construct(string $class, $column, $castType)
     {
-        parent::__construct("Call to undefined cast [{$castType}] on property [{$column}] in dto [{$class}].");
+        parent::__construct("Call to undefined cast [{$castType}] on property [{$column}] in dto [{$class}].", 1113);
 
         $this->class = $class;
         $this->column = $column;

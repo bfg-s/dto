@@ -2,9 +2,9 @@
 
 namespace Bfg\Dto;
 
-use App\Dto\OldUserDto;
 use Bfg\Dto\Console\MakeDtoCastCommand;
 use Bfg\Dto\Console\MakeDtoCommand;
+use Bfg\Dto\Console\MakeDtoDocsCommans;
 use Bfg\Dto\Interfaces\DtoContract;
 use Illuminate\Support\ServiceProvider;
 
@@ -16,7 +16,8 @@ class DtoServiceProvider extends ServiceProvider
         //Register generate command
         $this->commands([
             MakeDtoCommand::class,
-            MakeDtoCastCommand::class
+            MakeDtoCastCommand::class,
+            MakeDtoDocsCommans::class,
         ]);
 
     }

@@ -23,6 +23,9 @@ php artisan make:dto UserDto
 * [Constructors](#constructors)
     * [fromEmpty](#fromempty)
     * [fromArray](#fromarray)
+    * [fromAnything](#fromanything)
+    * [fromGet](#fromget)
+    * [fromPost](#frompost)
     * [fromRequest](#fromrequest)
     * [fromJson](#fromjson)
     * [fromSerialize](#fromserialize)
@@ -34,6 +37,7 @@ php artisan make:dto UserDto
 * [Binding](#binding)
     * [Binding to the model](#binding-to-the-model)
     * [Binding to the Carbon](#binding-to-the-carbon)
+* [Property extends](#property-extends)
 * [Property casting](#property-casting)
 * [Property hidden](#property-hidden)
 * [Property rules](#property-rules)
@@ -94,7 +98,36 @@ php artisan make:dto UserDto
 * [DTO Collection](#dto-collection)
     * [insertToDatabase](#inserttodatabase)
     * [insertToModel](#inserttomodel)
+* [Commands](#commands)
+    * [make:dto-cast](#makedto-cast)
+    * [make:enum](#makeenum)
+    * [make:dto-docs](#makedto-docs)
 * [Helpers](#helpers)
+
+### Introduction
+
+#### Variety of constructs for creating DTOs
+The package provides a variety of methods for creating DTOs (Data Transfer Objects), which significantly improves flexibility. Methods such as fromArray, fromModel, fromRequest, fromJson, fromSerialize and others allow you to conveniently create DTOs from different data sources.
+
+#### Support for nested DTOs
+The package supports nested DTOs with typing, which makes it easy to work with complex data, such as addresses or comments in the user example. This simplifies data processing in cases with dependencies between objects.
+
+#### Rich customization of properties
+Support for data casting, such as datetime, bool, as well as property extension through methods and attributes, such as DtoName, DtoFromConfig, DtoFromRequest are useful and powerful tools that make DTOs even more versatile.
+
+#### Diving into events
+The ability to handle various events (creating, created, mutating and others) provides greater flexibility in managing the state of the DTO. This can be useful for implementing validation logic or transforming data before or after it is used.
+
+#### DTO Collections Support
+Including support for DTO collections with methods for saving them to the database or models is a great addition that makes it easier to work with multiple objects.
+
+#### Additional Features
+Convenient helpers for working with DTOs, such as validate, restore, cache, as well as methods for working with metadata and logs, make this package a great tool for organizing the data structure in large projects.
+
+#### Ease of Use
+The ease of creating DTOs via the php artisan make:dto command and obvious typing of properties make the package developer-friendly, ensuring both clean code and good integration with the Laravel framework.
+
+Overall, this package looks like a powerful tool for structuring data in Laravel, suitable for use in projects with large amounts of data and complex models. Everything looks logical and flexible, which allows you to quickly adapt it to various needs.
 
 ### First steps
 Before you can use the DTO, you need to create a new class that extends the `Bfg\Dto\Dto` class.
@@ -148,6 +181,36 @@ $dto = UserDto::fromArray([
     'name' => 'John Doe',
     'email' => 'test@gmail.com',
 ]);
+```
+
+#### fromAnything
+You can create a new DTO from anything.
+```php
+$dto = UserDto::fromAnything(['name' => 'John Doe', 'email' => 'test@gmail.com']);
+$dto = UserDto::fromAnything([
+    ['name' => 'John Doe', 'email' => 'test@gmail.com'],
+    ['name' => 'John Doe', 'email' => 'test@gmail.com'],
+]);
+$dto = UserDto::fromAnything(\Illuminate\Foundation\Http\FormRequest::class);
+$dto = UserDto::fromAnything('{"name":"John Doe","email":"test@gmail.com"}');
+$dto = UserDto::fromAnything('C:8:"UserDto":23:{a:2:{s:4:"name";s:8:"John Doe";s:5:"email";s:13:"test@gmail.com";}}');
+$dto = UserDto::fromAnything(User::find(1));
+```
+
+#### fromGet
+You can create a new DTO from the get request.
+```php
+$dto = UserDto::fromGet(string $url, array|string|null $query = null, array $headers = []);
+
+UserDto::fromGet('https://test.dev', ['name' => 'John Doe', 'email' => 'test@gmail.com']);
+```
+
+#### fromPost
+You can create a new DTO from the post request.
+```php
+$dto = UserDto::fromPost(string $url, array $data = [], array $headers = []);
+
+UserDto::fromPost('https://test.dev', ['name' => 'John Doe', 'email' => 'test@gmail.com']);
 ```
 
 #### fromRequest
@@ -329,6 +392,27 @@ dump($dto->created_at); // Carbon object
 dump($dto->toArray()); // ['name' => 'John Doe', 'email' => 'test@gmail.com', 'created_at' => '2025-01-01 00:00:00']
 ```
 
+### Property extends
+You can use property extends for extending the DTO.
+```php
+use Bfg\Dto\Dto;
+
+class UserDto extends Dto
+{
+    protected static array $extends = [
+        'name' => 'string|null',
+        // Or
+        'name' => ['string', 'null'],
+    ];
+
+    public function __construct(
+        public string $name,
+        public string $email,
+        public ?string $password,
+    ) {}
+}
+```
+All properties have identical behavior to properties in the property promotion constructor.
 
 ### Property casting
 You can use property casting like in Laravel models.
@@ -448,7 +532,7 @@ $dto = UserDto::fromArray([
 ```
 
 ### Property encrypted
-You can use property encrypted for encrypting data in the DTO memory. But decrypting will be automatically when you get the property value.
+You can use property encrypted for getting encrypted data.
 ```php
 use Bfg\Dto\Dto;
 
@@ -461,18 +545,19 @@ class UserDto extends Dto
     public function __construct(
         public string $name,
         public string $email,
-        public ?string $password, // Will be encrypted
+        public string $password, // Data will be decrypted
     ) {}
 }
 
 $dto = UserDto::fromArray([
     'name' => 'John Doe',
     'email' => 'test@gmail.com',
-    'password' => '123456',
+    'password' => \Illuminate\Support\Facades\Crypt::encrypt('123456'),
 ]);
 
-echo $dto->password; // You will get encrypted password
-echo $dto->get('password'); // You will get decrypted password
+echo $dto->password; // You will get decrypted password
+
+dump($dto->toArray()); // ['name' => 'John Doe', 'email' => 'test@gmail.com', 'password' => 'encrypted data']
 ```
 
 ### Property mutations
@@ -742,6 +827,25 @@ echo $dto->name; // John Doe
 ```
 Here we have added an additional field name to the "name" field and we can now use 2 fields to insert data.
 
+For property extends:
+```php
+use Bfg\Dto\Dto;
+
+class UserDto extends Dto
+{            
+    #[DtoName('user', 'name')]
+    protected static array $extends = [
+        'name' => 'string',
+    ];
+
+    public function __construct(
+        public string $email,
+        public ?string $password,
+    ) {}
+}
+```
+Since we cannot write an attribute to a separate element of the array, we need to specify the name of the field to which we need to assign an additional name as the second parameter.
+
 #### DtoFromConfig
 You can use the `DtoFromConfig` attribute to add the property value from the config.
 ```php
@@ -887,7 +991,6 @@ echo $dto->toArray();
 ```
 Address will be converted to the array using the `UserAddressResource` resource.
 
-
 ### Events
 You can use events.
 
@@ -950,7 +1053,7 @@ UserDto::on('serialize', function (array $arguments, UserDto $dto) {
 ```
 
 #### unserialize
-You can use the `serialize` event.
+You can use the `unserialize` event.
 ```php
 UserDto::on('unserialize', function (array $arguments, UserDto $dto) {
     $arguments['name'] = strtolower($arguments['name']);
@@ -1198,6 +1301,34 @@ $collection = UserDto::fromCollection([
 $collection->insertToModel(\App\Models\User::class);
 ```
 
+### Commands
+You can use commands.
+#### Make dto
+You can create a new DTO using the artisan command.
+```bash
+php artisan make:dto UserDto
+```
+
+#### Make dto cast
+You can create a new DTO cast using the artisan command.
+```bash
+php artisan make:dto-cast UserNameCast
+```
+
+#### Make dto docs
+You can build the DTO documentation for extended fields using the artisan command.
+```bash
+php artisan make:dto-docs
+```
+> Add this command to the `composer.json` file for auto-generating DTO documentation after the `composer update` and `composer dump-autoload` command.
+```json
+"scripts": {
+    "post-autoload-dump": [
+        "@php artisan make:dto-docs"
+    ],
+}
+```
+
 ### Helpers
 You can use helpers.
 
@@ -1287,6 +1418,11 @@ $dto->fill([
 You can use the `length` helper for getting the length of the DTO in bytes.
 ```php
 $dto->length();
+// Or
+$dto->length(\Bfg\Dto\Dto::GET_LENGTH_SERIALIZE); // You get the length of the DTO in bytes in serialized form
+
+// And you can get the length of the DTO in bytes in json form
+$dto->length(\Bfg\Dto\Dto::GET_LENGTH_JSON);
 ```
 
 #### count
@@ -1321,12 +1457,6 @@ $dto->hash();
 You can use the `clone` helper for cloning the DTO.
 ```php
 $dto->clone();
-```
-
-#### recreate
-You can use the `recreate` helper for recreating the DTO.
-```php
-$dto->recreate();
 ```
 
 #### str

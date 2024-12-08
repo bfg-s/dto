@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bfg\Dto\Traits;
 
 use Bfg\Dto\Default\ExplainDto;
@@ -41,7 +43,21 @@ trait DtoReflectionTrait
                     'rule' => static::$rules[$parameter->getName()] ?? null,
                     'value' => $this->{$parameter->getName()},
                 ];
-            })->toArray(),
+            })->merge(collect(static::$extends)->map(function (string|array $types, string $key) {
+                $types = is_array($types) ? $types : explode('|', $types);
+
+                return [
+                    'name' => $key,
+                    'casting' => static::$cast[$key] ?? null,
+                    'type' => $types,
+                    'default' => null,
+                    'nullable' => in_array('null', $types),
+                    'isEncrypted' => in_array($key, static::$encrypted),
+                    'isHidden' => in_array($key, static::$hidden),
+                    'rule' => static::$rules[$key] ?? null,
+                    'value' => static::$__parameters[static::class][spl_object_id($this)][$key] ?? null,
+                ];
+            }))->toArray(),
             'computed' => collect(get_class_methods($this))->filter(function ($method) {
                 return !in_array($method, [
                     '__construct', '__destruct', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup',
@@ -61,7 +77,8 @@ trait DtoReflectionTrait
     {
         if (isset(static::$__vars[static::class][spl_object_id($this)])) {
             foreach (static::$__vars[static::class][spl_object_id($this)] as $key => $var) {
-                static::$__vars[static::class][spl_object_id($this)][$key] = isset($this->{$key}) ? $this->{$key} : null;
+                static::$__vars[static::class][spl_object_id($this)][$key] = $this->{$key}
+                    ?? (static::$__parameters[static::class][spl_object_id($this)][$key] ?? null);
             }
 
             return static::$__vars[static::class][spl_object_id($this)];
@@ -74,6 +91,9 @@ trait DtoReflectionTrait
             if (!$property->isStatic()) {
                 $vars[$property->getName()] = isset($this->{$property->getName()}) ? $this->{$property->getName()} : null;
             }
+        }
+        foreach (static::$extends as $key => $types) {
+            $vars[$key] = static::$__parameters[static::class][spl_object_id($this)][$key] ?? null;
         }
         return static::$__vars[static::class][spl_object_id($this)] = $vars;
     }
@@ -119,6 +139,18 @@ trait DtoReflectionTrait
             }
         }
 
+        foreach (static::$extends as $key => $types) {
+            $types = is_array($types) ? $types : explode('|', $types);
+
+            foreach ($types as $type) {
+                if ($type && class_exists($type)) {
+                    if (is_subclass_of($type, Dto::class)) {
+                        $relations[] = $key;
+                    }
+                }
+}
+        }
+
         return $relations;
     }
 
@@ -150,6 +182,40 @@ trait DtoReflectionTrait
             }
         }
 
+        foreach (static::$extends as $key => $types) {
+            $types = is_array($types) ? $types : explode('|', $types);
+            $type = $types[0];
+            $isBuiltin = in_array($type, ['string', 'int', 'float', 'bool', 'array', 'object', 'null', 'mixed', 'callable', 'iterable', 'false', 'true', 'resource']);
+
+            if ($isBuiltin) {
+                $properties[] = $key;
+            } else {
+                foreach ($types as $type) {
+                    if ($type && class_exists($type)) {
+                        if (is_subclass_of($type, Dto::class)) {
+                            $properties[] = $key;
+                            break;
+                        } else {
+                            if (is_subclass_of($type, Collection::class) || $type === Collection::class) {
+                                $properties[] = $key;
+                                break;
+                            } else {
+                                if (is_subclass_of($type, Model::class)) {
+                                    $properties[] = $key;
+                                    break;
+                                } else {
+                                    if (is_subclass_of($type, Carbon::class) || $type === Carbon::class) {
+                                        $properties[] = $key;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         return $properties;
     }
 
@@ -159,6 +225,10 @@ trait DtoReflectionTrait
 
         foreach (static::getConstructorParameters() as $parameter) {
             $parameters[] = $parameter->getName();
+        }
+
+        foreach (static::$extends as $key => $types) {
+            $parameters[] = $key;
         }
 
         return $parameters;

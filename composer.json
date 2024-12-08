@@ -18,8 +18,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Bfg\\Dto\\Tests\\": "tests/src/",
-            "Bfg\\Dto\\Tests\\Database\\Factories\\": "tests/database/factories"
+            "Bfg\\Dto\\Tests\\": "tests/"
         }
     },
     "extra": {

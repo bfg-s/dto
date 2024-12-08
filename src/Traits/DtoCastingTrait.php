@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bfg\Dto\Traits;
 
 use Bfg\Dto\Exceptions\DtoInvalidCastException;
@@ -28,15 +30,16 @@ trait DtoCastingTrait
      * @param  string  $key
      * @param  mixed  $value
      * @param  array  $attributes
+     * @param  string|null  $cast
      * @return mixed
      */
-    protected static function castAttribute(string $key, mixed $value, array $attributes = []): mixed
+    protected static function castAttribute(string $key, mixed $value, array $attributes = [], string $cast = null): mixed
     {
         if (is_object($value) || is_array($value)) {
 
             return $value;
         }
-        $castType = static::getCastType($key);
+        $castType = $cast ?: static::getCastType($key);
 
         if (!$castType) {
             $castType = get_debug_type($value);

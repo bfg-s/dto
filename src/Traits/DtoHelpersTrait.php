@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bfg\Dto\Traits;
 
 use Bfg\Dto\Collections\DtoCollection;
@@ -11,6 +13,9 @@ use Illuminate\Support\Stringable;
 
 trait DtoHelpersTrait
 {
+    const GET_LENGTH_SERIALIZE = 1;
+    const GET_LENGTH_JSON = 2;
+
     /**
      * Make new instance from args
      *
@@ -140,10 +145,29 @@ trait DtoHelpersTrait
      */
     public function fill(array $attributes): static
     {
+        foreach (static::$encrypted as $key) {
+
+            if (array_key_exists($key, $attributes)) {
+                try {
+                    $attributes[$key]
+                        = static::currentEncrypter()->decrypt($attributes[$key]);
+                } catch (\Throwable) {}
+            }
+        }
+
         foreach (static::getConstructorParameters() as $parameter) {
 
             $this->set(
                 ...static::createNameValueFromProperty($parameter, $attributes)
+            );
+        }
+
+        foreach (static::$extends as $key => $types) {
+
+            $types = is_array($types) ? $types : explode('|', $types);
+
+            $this->set(
+                ...static::createNameValueFromExtendedProperty($key, $types, $attributes)
             );
         }
 
@@ -153,11 +177,17 @@ trait DtoHelpersTrait
     /**
      * Get the length of the instance.
      *
+     * @param  int  $type
      * @return int
      */
-    public function length(): int
+    public function length(int $type = self::GET_LENGTH_SERIALIZE): int
     {
-        return strlen($this->toJson());
+        if ($type === static::GET_LENGTH_JSON) {
+            return strlen($this->toJson());
+        } else if ($type === static::GET_LENGTH_SERIALIZE) {
+            return strlen($this->toSerialize());
+        }
+        return 0;
     }
 
     /**
@@ -178,7 +208,8 @@ trait DtoHelpersTrait
      */
     public function has(string $key): bool
     {
-        return property_exists($this, $key);
+        return property_exists($this, $key)
+            || array_key_exists($key, static::$extends);
     }
 
     /**
@@ -209,19 +240,6 @@ trait DtoHelpersTrait
     public function clone(): static
     {
         return clone $this;
-    }
-
-    /**
-     * Recreate the instance.
-     *
-     * @return $this
-     */
-    public function recreate(array $attributes = []): static
-    {
-        return static::fromArray(array_merge(
-            $this->toArray(),
-            $attributes
-        ));
     }
 
     /**
@@ -309,13 +327,13 @@ trait DtoHelpersTrait
     {
         $arguments = $this->vars();
         $value = static::fireEvent(['updating', $key], $value, static::SET_CURRENT_DATA, $this);
-        $old = $this->{$key} ?? null;
-
+        $old = $this->{$key} ?? (static::$__parameters[static::class][spl_object_id($this)][$key] ?? null);
+        $isExtended = array_key_exists($key, static::$extends);
         if (! static::$__setWithoutCasting) {
             $value = static::castAttribute($key, $value, $arguments);
+        } else {
             static::$__setWithoutCasting = false;
         }
-
         $setMutatorMethod = 'fromArray' . ucfirst(Str::camel($key));
 
         if (method_exists(static::class, $setMutatorMethod)) {
@@ -324,38 +342,44 @@ trait DtoHelpersTrait
             $value = static::fireEvent(['mutated', $key], $value, static::SET_CURRENT_DATA, $this, $arguments);
         }
 
-        if (in_array($key, static::$encrypted)) {
-            $this->{$key} = $value ? static::currentEncrypter()->encrypt($value) : null;
-        } else {
-            if (! $value) {
+        if (! $value) {
 
-                try {
-                    $parameter = new \ReflectionProperty($this, $key);
-                } catch (\ReflectionException $e) {
-                    $parameter = null;
-                }
-                if ($parameter) {
-                    $type = $parameter->getType();
-                    if ($type instanceof \ReflectionUnionType) {
-                        foreach ($type->getTypes() as $unionType) {
+            try {
+                $parameter = new \ReflectionProperty($this, $key);
+            } catch (\ReflectionException $e) {
+                $parameter = null;
+            }
+            if ($parameter) {
+                $type = $parameter->getType();
+                $types = [];
+                if ($type instanceof \ReflectionUnionType) {
+                    foreach ($type->getTypes() as $unionType) {
+                        if ($type instanceof \ReflectionUnionType) {
                             $type = $unionType;
-                            break;
                         }
+                        $types[] = $unionType->getName();
                     }
-                    if (! $type->allowsNull()) {
+                }
+                if (! $type->allowsNull()) {
 
-                        $type = $type->getName();
+                    $type = $type->getName();
 
-                        $this->{$key} = static::makeValueByType($type);
-                    } else {
-                        $this->{$key} = null;
-                    }
+                    $newValue = static::makeValueByType($type, $types);
                 } else {
-                    $this->{$key} = $value;
+                    $newValue = $value;
                 }
             } else {
-                $this->{$key} = $value;
+                $newValue = $value;
             }
+        } else {
+            $newValue = $value;
+        }
+
+        if ($isExtended) {
+            static::$__parameters[static::class][spl_object_id($this)][$key] = $newValue;
+        } else {
+
+            $this->{$key} = $newValue;
         }
 
         static::fireEvent(['updated', $key], null, $this);
@@ -375,7 +399,7 @@ trait DtoHelpersTrait
      */
     public function get(string $key): mixed
     {
-        $value = $this->{$key};
+        $value = $this->{$key} ?? (static::$__parameters[static::class][spl_object_id($this)][$key] ?? null);
         $mutatorMethodName = 'toArray'.ucfirst(Str::camel($key));
         if (method_exists($this, $mutatorMethodName)) {
             $value = $this->{$mutatorMethodName}($value);
@@ -385,11 +409,7 @@ trait DtoHelpersTrait
         } else if (static::isClassCastable($key)) {
             $value = static::setClassCastableAttribute($key, $value, $this->vars());
         }
-        if (in_array($key, static::$encrypted)) {
-            $arguments = $this->vars();
-            $value = static::currentEncrypter()->decrypt($value);
-            $value = static::castAttribute($key, $value, $arguments);
-        }
+
         $this->log('get' . ucfirst(Str::camel($key)), compact('value'));
         return $value;
     }
@@ -402,11 +422,21 @@ trait DtoHelpersTrait
      */
     public function map(callable $callback): static
     {
-        $params = $this->getPropertyNames();
+        $params = array_merge(
+            $this->getPropertyNames(),
+            array_keys(static::$__parameters[static::class][spl_object_id($this)] ?? [])
+        );
 
         foreach ($params as $key) {
 
-            $this->set($key, call_user_func($callback, $this->{$key}, $key));
+            $this->set(
+                $key,
+                call_user_func(
+                    $callback,
+                    $this->{$key} ?? static::$__parameters[static::class][spl_object_id($this)][$key],
+                    $key
+                )
+            );
         }
 
         return $this;
@@ -470,7 +500,16 @@ trait DtoHelpersTrait
      */
     public function isCanNull(string $key): bool
     {
+        if (isset(static::$extends[$key])) {
+            $types = is_array(static::$extends[$key])
+                ? static::$extends[$key]
+                : explode('|', static::$extends[$key]);
+
+            return in_array('null', $types);
+        }
+
         $parameters = static::getConstructorParameters();
+
         foreach ($parameters as $parameter) {
             if ($parameter->getName() == $key) {
                 return $parameter->allowsNull();
