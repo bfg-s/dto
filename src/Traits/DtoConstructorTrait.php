@@ -61,7 +61,7 @@ trait DtoConstructorTrait
     public static function fromHttp(string $type, string $url, array|string|null $data = [], array $headers = []): DtoCollection|static|null
     {
         $response = static::httpClient()
-            ->withHeaders(array_merge($headers, static::getHeaders()))
+            ->withHeaders(array_merge($headers, static::httpHeaders()))
             ->{$type}($url, $data);
 
         if ($response->status() >= 400) {
