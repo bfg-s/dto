@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.1](https://github.com/bfg-s/dto/compare/1.1.0...1.1.1) - 2024-12-09
+* Fixed `make:dto-docs` command, now it generates documentation and for `lazy` properties and for computed properties
+* Fixed reflexion `fromArray...` and `toArray...` now is not computed properties
+
+
 ## [1.1.0](https://github.com/bfg-s/dto/compare/1.0.0...1.1.0) - 2024-12-08
 * `toArray` revert back properties with `DtoName` attribute to their attribute name
 * Array `extended` for extended properties

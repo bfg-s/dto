@@ -493,7 +493,7 @@ trait DtoSystemTrait
      *
      * @return \ReflectionParameter[]|array
      */
-    protected static function getConstructorParameters(): array
+    public static function getConstructorParameters(): array
     {
         if (isset(static::$__constructorParameters[static::class])) {
             return static::$__constructorParameters[static::class];

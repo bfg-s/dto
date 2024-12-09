@@ -400,19 +400,24 @@ use Bfg\Dto\Dto;
 
 class UserDto extends Dto
 {
-    protected static array $extends = [
-        'name' => 'string|null',
-        // Or
-        'name' => ['string', 'null'],
-    ];
-
     public function __construct(
-        public string $name,
         public string $email,
         public ?string $password,
     ) {}
 }
 ```
+```php
+class SpecialUserDto extends UserDto
+{
+    protected static array $extends = [
+        'name' => 'string|null',
+        // Or
+        'name' => ['string', 'null'],
+    ];
+}
+```
+This way you will expand the properties for DTO.
+
 All properties have identical behavior to properties in the property promotion constructor.
 
 ### Property casting
