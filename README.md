@@ -104,6 +104,8 @@ php artisan make:dto UserDto
     * [make:enum](#makeenum)
     * [make:dto-docs](#makedto-docs)
 * [Helpers](#helpers)
+* [Customize http request](#customize-http-request)
+* [Default Laravel Support](#default-laravel-support)
 
 ### Introduction
 
