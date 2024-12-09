@@ -142,4 +142,11 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess
      * @var bool
      */
     protected static bool $logsEnabled = false;
+
+    /**
+     * Use post by default for anything constructor
+     *
+     * @var bool
+     */
+    protected static bool $postDefault = false;
 }

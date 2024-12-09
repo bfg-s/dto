@@ -6,6 +6,7 @@ namespace Bfg\Dto\Traits;
 
 use Bfg\Dto\Collections\DtoCollection;
 use Bfg\Dto\Dto;
+use Bfg\Dto\Exceptions\DtoHttpRequestException;
 use Bfg\Dto\Exceptions\DtoUndefinedCacheException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
@@ -30,9 +31,7 @@ trait DtoConstructorTrait
         array $headers = []
     ): DtoCollection|static|null {
 
-        $response = Http::get($url, $query);
-
-        return static::fromHttp($response, $headers);
+        return static::fromHttp('get', $url, $query, $headers);
     }
 
     /**
@@ -48,32 +47,30 @@ trait DtoConstructorTrait
         array $headers = []
     ): DtoCollection|static|null {
 
-        $response = Http::post($url, $data);
-
-        return static::fromHttp($response, $headers);
+        return static::fromHttp('post', $url, $data, $headers);
     }
 
     /**
-     * @param  \Illuminate\Http\Client\Response  $response
+     * @param  string  $type
+     * @param  string  $url
+     * @param  array|string|null  $data
      * @param  array  $headers
      * @return \Bfg\Dto\Collections\DtoCollection|Dto|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromHttp(
-        Response $response,
-        array $headers = []
-    ): static|DtoCollection|null {
+    public static function fromHttp(string $type, string $url, array|string|null $data = [], array $headers = []): DtoCollection|static|null
+    {
+        $response = static::httpClient()
+            ->withHeaders(array_merge($headers, static::getHeaders()))
+            ->{$type}($url, $data);
 
-        $headers = array_merge($headers, static::getHeaders());
-
-        foreach ($headers as $key => $header) {
-
-            $response->withHeader($key, $header);
+        if ($response->status() >= 400) {
+            throw new DtoHttpRequestException($response->body());
         }
 
-        $body = $response->body();
-
-        return static::fromAnything($body);
+        return static::fromAnything(
+            $response->body()
+        );
     }
 
     /**
@@ -138,6 +135,9 @@ trait DtoConstructorTrait
             }
         } else if (is_string($item)) {
             if (filter_var($item, FILTER_VALIDATE_URL) !== false) {
+                if (static::$postDefault) {
+                    return static::fromPost($item, ...$other);
+                }
                 return static::fromGet($item, ...$other);
             } else if (static::isJson($item)) {
                 return static::fromJson($item);

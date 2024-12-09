@@ -1667,6 +1667,49 @@ You can use the `isNotInstanceOfArray` helper for checking the DTO is property n
 $dto->isNotInstanceOfArray('addresses', AddressDto::class);
 ```
 
+### Customize http request
+You can customize the http request.
+```php
+use Bfg\Dto\Dto;
+
+class UserDto extends Dto
+{
+    public function __construct(
+        public string $name,
+        public string $email,
+        public ?string $password,
+    ) {}
+    
+    protected static function httpClient(): PendingRequest
+    {
+        return Http::withoutVerifying()
+            ->withoutRedirecting()
+            ->withCookies(['name' => 'value'])
+            ->withHeaders(['Authorization' => 'Bearer ' . auth()->user()->token]);
+    }
+}
+```
+Or you can customize only headers:
+```php
+use Bfg\Dto\Dto;
+
+class UserDto extends Dto
+{
+    public function __construct(
+        public string $name,
+        public string $email,
+        public ?string $password,
+    ) {}
+        
+    protected static function httpHeaders(): array
+    {
+        return [
+            'Authorization' => 'Bearer ' . auth()->user()->token,
+        ];
+    }
+}
+```
+
 ### Default Laravel Support
 DTO class use a famous Laravel support, such as `Illuminate\Support\Traits\Conditionable`, `Illuminate\Support\Traits\Dumpable`, 
 `Illuminate\Support\Traits\Macroable` and `Illuminate\Support\Traits\Tappable`.

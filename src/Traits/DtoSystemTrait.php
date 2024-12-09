@@ -19,9 +19,11 @@ use Bfg\Dto\Exceptions\DtoValidationException;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use ReflectionParameter;
 
@@ -582,8 +584,18 @@ trait DtoSystemTrait
      *
      * @return array
      */
-    protected static function getHeaders(): array
+    protected static function httpHeaders(): array
     {
         return [];
+    }
+
+    /**
+     * Client creator for http requests
+     *
+     * @return PendingRequest
+     */
+    protected static function httpClient(): PendingRequest
+    {
+        return Http::createPendingRequest();
     }
 }
