@@ -27,6 +27,7 @@ php artisan make:dto UserDto
     * [fromAnything](#fromanything)
     * [fromGet](#fromget)
     * [fromPost](#frompost)
+    * [fromHttp](#fromhttp)
     * [fromRequest](#fromrequest)
     * [fromJson](#fromjson)
     * [fromSerialize](#fromserialize)
@@ -215,6 +216,14 @@ $dto = UserDto::fromPost(string $url, array $data = [], array $headers = []);
 
 UserDto::fromPost('https://test.dev', ['name' => 'John Doe', 'email' => 'test@gmail.com']);
 ```
+
+#### fromHttp
+You can create a new DTO from the http request.
+```php
+$dto = UserDto::fromHttp(string $method, string $url, array|string|null $data = [], array $headers = []): DtoCollection|static|null;
+
+UserDto::fromHttp('get', 'https://test.dev', ['name' => 'John Doe', 'email' => 'test@gmail.com']);
+````
 
 #### fromRequest
 You can create a new DTO from the request.
@@ -1711,6 +1720,41 @@ class UserDto extends Dto
     }
 }
 ```
+Also you can customize what `fromAnything` can be used for the request POST by default
+```php
+use Bfg\Dto\Dto;
+
+class UserDto extends Dto
+{
+    protected static bool $postDefault = true;
+
+    public function __construct(
+        public string $name,
+        public string $email,
+        public ?string $password,
+    ) {}
+}
+```
+And you can customize the parameters data for the request by default
+```php
+use Bfg\Dto\Dto;
+
+class UserDto extends Dto
+{
+    public function __construct(
+        public string $name,
+        public string $email,
+        public ?string $password,
+    ) {}
+    
+    protected static function httpData(array|string|null $data): array|string|null
+    {
+        // Do something with data
+        return $data;
+    }
+}
+```
+
 
 ### Default Laravel Support
 DTO class use a famous Laravel support, such as `Illuminate\Support\Traits\Conditionable`, `Illuminate\Support\Traits\Dumpable`, 

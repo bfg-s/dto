@@ -598,4 +598,13 @@ trait DtoSystemTrait
     {
         return Http::createPendingRequest();
     }
+
+    /**
+     * @param  array|string|null  $data
+     * @return array|string|null
+     */
+    protected static function httpData(array|string|null $data): array|string|null
+    {
+        return $data;
+    }
 }

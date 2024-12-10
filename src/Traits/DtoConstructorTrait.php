@@ -51,18 +51,22 @@ trait DtoConstructorTrait
     }
 
     /**
-     * @param  string  $type
+     * @param  string  $method
      * @param  string  $url
      * @param  array|string|null  $data
      * @param  array  $headers
      * @return \Bfg\Dto\Collections\DtoCollection|Dto|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromHttp(string $type, string $url, array|string|null $data = [], array $headers = []): DtoCollection|static|null
+    public static function fromHttp(string $method, string $url, array|string|null $data = [], array $headers = []): DtoCollection|static|null
     {
+        $method = strtolower($method);
+        if (! in_array($method, ['get', 'head', 'post', 'put', 'patch', 'delete'])) {
+            $method = 'get';
+        }
         $response = static::httpClient()
             ->withHeaders(array_merge($headers, static::httpHeaders()))
-            ->{$type}($url, $data);
+            ->{$method}($url, static::httpData($data));
 
         if ($response->status() >= 400) {
             throw new DtoHttpRequestException($response->body());

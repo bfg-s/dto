@@ -9,6 +9,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 * Fixed reflexion `fromArray...` and `toArray...` now is not computed properties
 * Method for getting http client
 * Property for getting by post request in anything constructor
+* Method `httpData` for prepare data for post or get request
+* Added `fromHttp` constructor to create a `Dto` from `GET` or `POST` request body
 
 ## [1.1.0](https://github.com/bfg-s/dto/compare/1.0.0...1.1.0) - 2024-12-08
 * `toArray` revert back properties with `DtoName` attribute to their attribute name
