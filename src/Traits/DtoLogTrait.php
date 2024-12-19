@@ -6,24 +6,37 @@ namespace Bfg\Dto\Traits;
 
 use Bfg\Dto\Default\LogsDto;
 use Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException;
+use Carbon\Carbon;
 
 trait DtoLogTrait
 {
+    protected static function startTime(): Carbon
+    {
+        return now();
+    }
+
+    protected static function endTime(Carbon $start): float|int
+    {
+        return $start->diffInMilliseconds(now());
+    }
+
     /**
      * The current data
      *
      * @param  string  $message
      * @param  array  $context
+     * @param  int|float  $ms
      * @return \Bfg\Dto\Dto
      */
-    public function log(string $message, array $context = []): static
+    public function log(string $message, array $context = [], int|float $ms = 0): static
     {
-        if (static::$logsEnabled) {
+        if (static::$logsEnabled && ! static::$__logMute) {
 
             static::$__logs[static::class][spl_object_id($this)][] = [
                 'message' => $message,
                 'context' => $context,
-                'timestamp' => now(),
+                'timestamp' => now()->toDateTimeString(),
+                'ms' => $ms,
             ];
         }
 

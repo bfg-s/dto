@@ -14,12 +14,14 @@ trait DtoMetaTrait
      */
     public function setMeta(array $meta): static
     {
+        $start = static::startTime();
+
         static::$__meta[static::class][spl_object_id($this)] = array_merge(
             static::$__meta[static::class][spl_object_id($this)] ?? [],
             $meta
         );
 
-        $this->log('setMeta', $meta);
+        $this->log('setMeta', $meta, static::endTime($start));
 
         return $this;
     }
@@ -32,8 +34,9 @@ trait DtoMetaTrait
      */
     public function unsetMeta(string $key): static
     {
+        $start = static::startTime();
         unset(static::$__meta[static::class][spl_object_id($this)][$key]);
-        $this->log('unsetMeta', compact('key'));
+        $this->log('unsetMeta', compact('key'), static::endTime($start));
         return $this;
     }
 
@@ -45,8 +48,11 @@ trait DtoMetaTrait
      */
     public function getMeta(string $key = null): mixed
     {
-        return $key
+        $start = static::startTime();
+        $result = $key
             ? (static::$__meta[static::class][spl_object_id($this)][$key] ?? null)
             : (static::$__meta[static::class][spl_object_id($this)] ?? []);
+        $this->log('getMeta', compact('key', 'result'), static::endTime($start));
+        return $result;
     }
 }

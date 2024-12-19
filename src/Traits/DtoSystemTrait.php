@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Bfg\Dto\Traits;
 
-use App\Dto\UserDto;
 use Bfg\Dto\Attributes\DtoFromCache;
 use Bfg\Dto\Attributes\DtoFromConfig;
 use Bfg\Dto\Attributes\DtoFromRequest;
@@ -25,6 +24,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use ReflectionParameter;
 
 trait DtoSystemTrait
@@ -33,12 +33,13 @@ trait DtoSystemTrait
      * Make instance from prepared array data
      *
      * @param  array  $data
+     * @param  \Illuminate\Database\Eloquent\Model|null  $model
      * @return array
      * @throws \Bfg\Dto\Exceptions\DtoModelBindingFailException
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
-     * @throws \Bfg\Dto\Exceptions\DtoValidationException
+     * @throws \ReflectionException
      */
-    protected static function makeInstanceFromArray(array $data): array
+    protected static function makeInstanceFromArray(array $data, Model $model = null): array
     {
         $arguments = [];
         $rules = array_merge(static::$rules, static::rules());
@@ -48,11 +49,19 @@ trait DtoSystemTrait
             if ($validator->fails()) {
                 throw new DtoValidationException($validator);
             }
+            $data = $validator->validated();
         }
         $created = [];
         foreach (static::getConstructorParameters() as $parameter) {
 
-            [$name, $value] = static::createNameValueFromProperty($parameter, $data);
+            [$name, $value] = static::createNameValueFromProperty($parameter, $data, $model);
+
+            if ($value === null) {
+                $methodByDefault = 'default' . ucfirst(Str::camel($name));
+                if (method_exists(static::class, $methodByDefault)) {
+                    $value = static::$methodByDefault();
+                }
+            }
 
             $arguments[$name] = $value;
             $created[$name] = $name;
@@ -66,7 +75,14 @@ trait DtoSystemTrait
 
             $types = is_array($types) ? $types : explode('|', $types);
 
-            [$name, $value] = static::createNameValueFromExtendedProperty($key, $types, $data);
+            [$name, $value] = static::createNameValueFromExtendedProperty($key, $types, $data, $model);
+
+            if ($value === null) {
+                $methodByDefault = 'default' . ucfirst(Str::camel($name));
+                if (method_exists(static::class, $methodByDefault)) {
+                    $value = static::$methodByDefault();
+                }
+            }
 
             $arguments[$name] = $value;
         }
@@ -116,7 +132,7 @@ trait DtoSystemTrait
      * @throws \Bfg\Dto\Exceptions\DtoModelBindingFailException
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    protected static function createNameValueFromExtendedProperty(string $key, array $types, array $data): array
+    protected static function createNameValueFromExtendedProperty(string $key, array $types, array $data, Model $model = null): array
     {
         $type = $types[0];
         if (! $type) {
@@ -129,6 +145,13 @@ trait DtoSystemTrait
 
 
         [$nameInData, $notFoundKeys, $isOtherParam, $data] = static::detectAttributesForExtended($data, $key);
+
+        if ($model) {
+            if (! array_key_exists($nameInData, $data)) {
+
+                $data[$nameInData] = $model->{$nameInData};
+            }
+        }
 
         if (! $isBuiltin && ! $isOtherParam && class_exists($type)) {
 
@@ -162,11 +185,12 @@ trait DtoSystemTrait
      *
      * @param  ReflectionParameter  $parameter
      * @param  array  $data
+     * @param  \Illuminate\Database\Eloquent\Model|null  $model
      * @return array
      * @throws \Bfg\Dto\Exceptions\DtoModelBindingFailException
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    protected static function createNameValueFromProperty(ReflectionParameter $parameter, array $data = []): array
+    protected static function createNameValueFromProperty(ReflectionParameter $parameter, array $data = [], Model $model = null): array
     {
         $type = $parameter->getType();
         $name = $parameter->getName();
@@ -175,7 +199,15 @@ trait DtoSystemTrait
         [$type, $hasCollection, $hasArray] = static::detectType($type);
         [$nameInData, $notFoundKeys, $isOtherParam, $data] = static::detectAttributes($data, $parameter);
 
-        if ($type->isBuiltin() && ! array_key_exists($nameInData, $data) && ! $type->allowsNull()) {
+        if ($model) {
+            if (! array_key_exists($nameInData, $data)) {
+
+                $data[$nameInData] = $model->{$nameInData};
+            }
+        }
+
+        $methodDefault = 'default' . ucfirst(Str::camel($name));
+        if ($type->isBuiltin() && (! array_key_exists($nameInData, $data) && ! $parameter->isDefaultValueAvailable()) && ! $type->allowsNull() && ! method_exists(static::class, $methodDefault)) {
             throw new DtoUndefinedArrayKeyException($nameInData . ($notFoundKeys ? ', ' . implode(', ', $notFoundKeys) : ''));
         }
 
@@ -183,7 +215,7 @@ trait DtoSystemTrait
             $class = $type->getName();
 
             if (is_subclass_of($class, Dto::class)) {
-                $value = static::discoverDtoValue($hasCollection, $hasArray, $nameInData, $class, $data, $parameter->allowsNull());
+                $value = static::discoverDtoValue($hasCollection, $hasArray, $nameInData, $class, $data, $parameter->allowsNull(), $model);
             } else {
                 if (is_subclass_of($class, Model::class)) {
                     $value = static::discoverModelValue($nameInData, $class, $data, $parameter->allowsNull());
@@ -197,6 +229,10 @@ trait DtoSystemTrait
 
         $value = static::fireEvent(['created', $name], $value, static::SET_CURRENT_DATA, $data, $parameter);
         $value = static::transformAttribute($name, $value);
+
+        if ($value === null && $parameter->isDefaultValueAvailable()) {
+            $value = $parameter->getDefaultValue();
+        }
 
         return [$name, $value];
     }
@@ -402,7 +438,7 @@ trait DtoSystemTrait
      * @param  string  $nameInData
      * @param  Model|string  $class
      * @param  array  $data
-     * @param  \ReflectionParameter  $parameter
+     * @param  bool  $allowsNull
      * @return mixed
      * @throws \Bfg\Dto\Exceptions\DtoModelBindingFailException
      */
@@ -450,6 +486,7 @@ trait DtoSystemTrait
      * @param  Dto|string  $class
      * @param  array  $data
      * @param  bool  $allowsNull
+     * @param  \Illuminate\Database\Eloquent\Model|null  $model
      * @return mixed
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -460,19 +497,36 @@ trait DtoSystemTrait
         Dto|string $class,
         array $data,
         bool $allowsNull,
+        Model $model = null,
     ): mixed {
+
+        $namedData = array_key_exists($nameInData, $data)
+            ? $data[$nameInData]
+            : ($model ? $model->{$nameInData} : []);
+
         if ($hasCollection) {
-            $value = new DtoCollection();
-            foreach ($data[$nameInData] ?? [] as $item) {
-                $value->push($class::fromAnything($item));
+            if (is_string($namedData)) {
+                if (static::isSerialize($namedData)) {
+                    $value = unserialize($namedData);
+                } else if (static::isJson($namedData)) {
+                    $value = new DtoCollection(json_decode($namedData, true));
+                }
+            } else {
+                $value = new DtoCollection();
+
+                foreach ($namedData as $item) {
+                    $value->push($class::fromAnything($item));
+                }
             }
         } else if ($hasArray) {
             $value = $allowsNull ? null : [];
-            foreach ($data[$nameInData] ?? [] as $item) {
+            foreach ($namedData as $item) {
                 $value[] = $class::fromAnything($item);
             }
         } else {
-            $value = isset($data[$nameInData]) ? $class::fromAnything($data[$nameInData]) : null;
+            $value = $namedData
+                ? ($namedData instanceof Collection ? $class::fromAnything($namedData->first()) : $class::fromAnything($namedData))
+                : null;
         }
 
         return $value;
@@ -557,6 +611,17 @@ trait DtoSystemTrait
         }
 
         return $value;
+    }
+
+    /**
+     * Trap for model
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return \Illuminate\Database\Eloquent\Model
+     */
+    protected static function withModel(Model $model): Model
+    {
+        return $model;
     }
 
     /**

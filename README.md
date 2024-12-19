@@ -284,6 +284,36 @@ $dto = UserDto::fromCache(function () {
 });
 ```
 
+#### fromSource
+You can create a new DTO from source.
+```php
+use Bfg\Dto\Dto;
+
+class UserDto extends Dto
+{
+    public function __construct(
+        public string $name,
+        public string $email,
+        public ?string $password,
+    ) {}
+    
+    public static function sourceV1(...$arguments): array {
+    
+        // Do something
+    
+        return [
+            'name' => 'John Doe',
+            'email' => 'test@gmail.com',
+            'password' => '123456',
+        ];
+    }
+}
+```
+And after that you can create a new DTO from source.
+```php
+$dto = UserDto::fromSource('v1', ...$arguments);
+```
+
 
 ### Nested DTO calls
 For nested DTO calls, you can use type hinting.
@@ -695,6 +725,35 @@ $dto = UserDto::fromArray([
 echo $dto->name(); // John Doe
 // The same as
 echo $dto->get('name'); // John Doe
+```
+
+### Method default for field
+You can use the `default` method for setting the default value for the field.
+```php
+use Bfg\Dto\Dto;
+
+class UserDto extends Dto
+{
+    public function __construct(
+        public string $name,
+        public string $email,
+        public ?string $password,
+    ) {}
+    
+    public static function defaultName()
+    {
+        return 'Jon';
+    }
+}
+```
+After that, you can escape the name field when creating a DTO.
+```php
+$dto = UserDto::fromArray([
+    'email' => 'test@gmail.com',
+    'password' => '123456',
+]);
+
+echo $dto->name; // Jon
 ```
 
 ### Collection hinting
@@ -1286,6 +1345,12 @@ You can convert DTO to serialize.
 $dto->toSerialize();
 ```
 
+#### ToApi
+You can convert DTO to api.
+```php
+$dto->toApi(string $url, string $method = 'post', array $headers = []);
+```
+
 #### ToString
 You can convert DTO to string.
 ```php
@@ -1363,6 +1428,14 @@ UserDto::new(
 You can use the `version` helper for getting the DTO version.
 ```php
 UserDto::version();
+```
+
+#### pipeline
+You can use the `pipeline` helper for creating a new DTO pipeline.
+```php
+$dto->pipeline([
+    SomeClassForPipeline::class,
+]);
 ```
 
 #### cache

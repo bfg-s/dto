@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Bfg\Dto\Traits;
 
 use Bfg\Dto\Collections\DtoCollection;
+use Bfg\Dto\Default\DiagnoseDto;
+use Bfg\Dto\Default\LogsInnerDto;
 use Bfg\Dto\Dto;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -35,6 +39,107 @@ trait DtoHelpersTrait
     public static function version(): string
     {
         return static::$version;
+    }
+
+    /**
+     * @param  array  $through
+     * @return mixed
+     */
+    public function pipeline(array $through): mixed
+    {
+        return (new Pipeline(app()))
+            ->send($this)
+            ->through($through)
+            ->thenReturn();
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
+    public function model(): Model|null
+    {
+        return static::$__models[static::class][spl_object_id($this)] ?? null;
+    }
+
+    /**
+     * Save to current model if exists
+     *
+     * @return $this
+     */
+    public function save(): static
+    {
+        $model = $this->model();
+
+        if ($model) {
+            $model->fill($this->toArray());
+            $model->save();
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return DiagnoseDto
+     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
+     */
+    public function selfDiagnose(): DiagnoseDto
+    {
+        $start = static::startTime();
+
+        $logs = $this->logs();
+        $explain = $this->explain();
+        $computed = $explain->computed;
+
+        $propertiesNewerUsed = [];
+        $metaNewerUsed = [];
+        $computedNewerUsed = [];
+        $totalMs = 0;
+        $serializedTimes = $logs->logs->where('message', 'serialized')->count();
+        $unserializedTimes = $logs->logs->where('message', 'unserialized')->count();
+
+        foreach (static::getConstructorParameters() as $parameter) {
+            $key = 'get' . ucfirst(Str::camel($parameter->getName()));
+            if ($logs->logs->where('message', $key)->count() == 0) {
+                $propertiesNewerUsed[] = $parameter->getName();
+            }
+        }
+
+        foreach (static::$extends as $key => $types) {
+            $key = 'get' . ucfirst(Str::camel($key));
+            if ($logs->logs->where('message', $key)->count() == 0) {
+                $propertiesNewerUsed[] = $key;
+            }
+        }
+
+        foreach (static::$__meta[static::class][spl_object_id($this)] ?? [] as $key => $value) {
+            if ($logs->logs->where('message', 'getMeta')->filter(fn (LogsInnerDto $log) => $log->context['key'] === $key)->count() == 0) {
+                $metaNewerUsed[] = $key;
+            }
+        }
+
+        foreach ($computed as $item) {
+            $key = "computed" . ucfirst(Str::camel($item));
+            if ($logs->logs->where('message', $key)->count() == 0) {
+                $computedNewerUsed[] = $item;
+            }
+        }
+
+        foreach ($logs->logs as $log) {
+            $totalMs += $log->ms;
+        }
+
+        $result = DiagnoseDto::fromArray([
+            'totalMs' => $totalMs,
+            'serializedTimes' => $serializedTimes,
+            'unserializedTimes' => $unserializedTimes,
+            'metaNewerUsed' => $metaNewerUsed,
+            'computedNewerUsed' => $computedNewerUsed,
+            'propertiesNewerUsed' => $propertiesNewerUsed,
+        ]);
+
+        $this->log('selfDiagnose', [], static::endTime($start));
+
+        return $result;
     }
 
     /**
@@ -325,6 +430,7 @@ trait DtoHelpersTrait
      */
     public function set(string $key, mixed $value = null): static
     {
+        $start = static::startTime();
         $arguments = $this->vars();
         $value = static::fireEvent(['updating', $key], $value, static::SET_CURRENT_DATA, $this);
         $old = $this->{$key} ?? (static::$__parameters[static::class][spl_object_id($this)][$key] ?? null);
@@ -385,7 +491,7 @@ trait DtoHelpersTrait
         static::fireEvent(['updated', $key], null, $this);
 
         if ($old != $value) {
-            $this->log('set' . ucfirst(Str::camel($key)), ['old' => $old, 'new' => $value]);
+            $this->log('set' . ucfirst(Str::camel($key)), ['old' => $old, 'new' => $value], static::endTime($start));
         }
 
         return $this;
@@ -399,6 +505,7 @@ trait DtoHelpersTrait
      */
     public function get(string $key): mixed
     {
+        $start = static::startTime();
         $value = $this->{$key} ?? (static::$__parameters[static::class][spl_object_id($this)][$key] ?? null);
         $mutatorMethodName = 'toArray'.ucfirst(Str::camel($key));
         if (method_exists($this, $mutatorMethodName)) {
@@ -410,7 +517,7 @@ trait DtoHelpersTrait
             $value = static::setClassCastableAttribute($key, $value, $this->vars());
         }
 
-        $this->log('get' . ucfirst(Str::camel($key)), compact('value'));
+        $this->log('get' . ucfirst(Str::camel($key)), compact('value'), static::endTime($start));
         return $value;
     }
 

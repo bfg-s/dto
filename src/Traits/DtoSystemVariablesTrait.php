@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bfg\Dto\Traits;
 
+use Carbon\Carbon;
 use Illuminate\Contracts\Encryption\Encrypter;
 
 trait DtoSystemVariablesTrait
@@ -90,6 +91,13 @@ trait DtoSystemVariablesTrait
     protected static bool $__setWithoutCasting = false;
 
     /**
+     * Set log mute
+     *
+     * @var bool
+     */
+    protected static bool $__logMute = false;
+
+    /**
      * The lazy cache.
      *
      * @var array
@@ -151,4 +159,14 @@ trait DtoSystemVariablesTrait
      * @var array
      */
     protected static array $__cache = [];
+
+    /**
+     * @var array
+     */
+    protected static array $__logStartTime = [];
+
+    /**
+     * @var array
+     */
+    protected static array $__models = [];
 }

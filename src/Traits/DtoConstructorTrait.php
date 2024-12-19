@@ -5,19 +5,77 @@ declare(strict_types=1);
 namespace Bfg\Dto\Traits;
 
 use Bfg\Dto\Collections\DtoCollection;
+use Bfg\Dto\Collections\LazyDtoCollection;
 use Bfg\Dto\Dto;
 use Bfg\Dto\Exceptions\DtoHttpRequestException;
+use Bfg\Dto\Exceptions\DtoSourceNotFoundException;
 use Bfg\Dto\Exceptions\DtoUndefinedCacheException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 trait DtoConstructorTrait
 {
+    /**
+     * @param  string  $sourceName
+     * @param ...$arguments
+     * @return \Bfg\Dto\Collections\DtoCollection|\Bfg\Dto\Dto|null
+     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
+     */
+    public static function fromSource(string $sourceName, ...$arguments): static|DtoCollection|null
+    {
+        $method = 'source' . ucfirst(Str::camel($sourceName));
+
+        if (method_exists(static::class, $method)) {
+            return static::fromAnything(static::$method(...$arguments));
+        }
+
+        throw new DtoSourceNotFoundException($sourceName);
+    }
+
+    /**
+     * @param  string  $filePath
+     * @return \Bfg\Dto\Collections\LazyDtoCollection
+     */
+    public static function fromFile(string $filePath): LazyDtoCollection
+    {
+        if (!file_exists($filePath)) {
+            throw new \InvalidArgumentException("File not found: {$filePath}");
+        }
+
+        $format = pathinfo($filePath, PATHINFO_EXTENSION);
+
+        if (! in_array($format, ['json', 'csv'])) {
+            throw new \InvalidArgumentException("Unsupported format: {$format}");
+        }
+
+        return LazyDtoCollection::make(function () use ($filePath, $format) {
+            $handle = fopen($filePath, 'r');
+            if (!$handle) {
+                throw new \RuntimeException("Unable to open file: {$filePath}");
+            }
+
+            try {
+                while (($line = fgets($handle)) !== false) {
+                    $data = match ($format) {
+                        'json' => json_decode($line, true),
+                        'csv' => str_getcsv($line),
+                        default => throw new \InvalidArgumentException("Unsupported format: {$format}"),
+                    };
+
+                    if ($data) {
+                        yield static::fromArray($data);
+                    }
+                }
+            } finally {
+                fclose($handle);
+            }
+        });
+    }
+
     /**
      * @param  string  $url
      * @param  array|string|null  $query
@@ -147,8 +205,10 @@ trait DtoConstructorTrait
                 return static::fromJson($item);
             } else if (static::isSerialize($item)) {
                 return static::fromSerialize($item);
-            } else if (class_exists($item) && is_subclass_of($item, Request::class)) {
-                return static::fromRequest($item);
+            } else if (class_exists($item)) {
+                if (is_subclass_of($item, Request::class)) {
+                    return static::fromRequest($item);
+                }
             }
         } else if ($item instanceof Model) {
             return static::fromModel($item);
@@ -186,11 +246,14 @@ trait DtoConstructorTrait
      */
     public static function fromModel(Model $model = null): static
     {
-        $data = static::fireEvent('prepareModel', $model?->toArray() ?: [], static::SET_CURRENT_DATA);
-        [$dto, $arguments] = static::makeInstanceFromArray($data);
+        $start = static::startTime();
+        $model = static::withModel($model);
+        $data = static::fireEvent('prepareModel', [], static::SET_CURRENT_DATA);
+        [$dto, $arguments] = static::makeInstanceFromArray($data, $model);
+        static::$__models[static::class][spl_object_id($dto)] = $model;
         static::fireEvent('created', [], $dto, $arguments);
         static::fireEvent('fromModel', [], $dto, $arguments);
-        $dto->log('createdFromModel', $arguments);
+        $dto->log('createdFromModel', [], ms: static::endTime($start));
         return $dto;
     }
 
@@ -202,11 +265,12 @@ trait DtoConstructorTrait
      */
     public static function fromSerialize(string $serialize = null): static
     {
+        $start = static::startTime();
         $serialize = static::fireEvent('prepareSerialize', $serialize, static::SET_CURRENT_DATA);
         $dto = unserialize($serialize);
         static::fireEvent('fromSerialize', [], $dto);
         if ($dto instanceof Dto) {
-            $dto->log('createdFromSerialize');
+            $dto->log('createdFromSerialize', ms: static::endTime($start));
         }
         return $dto;
     }
@@ -220,6 +284,7 @@ trait DtoConstructorTrait
      */
     public static function fromJson(string $json = null): DtoCollection|static
     {
+        $start = static::startTime();
         $data = $json ? json_decode($json, true) : [];
         if (! is_assoc($data)) {
             return static::fromCollection($data);
@@ -228,7 +293,7 @@ trait DtoConstructorTrait
         [$dto, $arguments] = static::makeInstanceFromArray($data);
         static::fireEvent('created', [], $dto, $arguments);
         static::fireEvent('fromJson', [], $dto, $arguments);
-        $dto->log('createdFromJson', $arguments);
+        $dto->log('createdFromJson', [], ms: static::endTime($start));
         return $dto;
     }
 
@@ -240,6 +305,8 @@ trait DtoConstructorTrait
      */
     public static function fromRequest(FormRequest|Request|string $request = null): static
     {
+        $start = static::startTime();
+
         if (is_string($request)) {
 
             $request = app($request);
@@ -258,7 +325,7 @@ trait DtoConstructorTrait
         static::fireEvent('created', [], $dto, $arguments);
         static::fireEvent('fromRequest', [], $dto, $arguments);
 
-        $dto->log('createdFromRequest', $arguments);
+        $dto->log('createdFromRequest', [], ms: static::endTime($start));
 
         return $dto;
     }
@@ -272,6 +339,8 @@ trait DtoConstructorTrait
      */
     public static function fromArray(array $data = null): DtoCollection|static
     {
+        $start = static::startTime();
+
         if (! is_assoc($data)) {
 
             return static::fromCollection($data);
@@ -284,7 +353,7 @@ trait DtoConstructorTrait
         static::fireEvent('created', [], $dto, $arguments);
         static::fireEvent('fromArray', [], $dto, $arguments);
 
-        $dto->log('createdFromArray', $arguments);
+        $dto->log('createdFromArray', [], ms: static::endTime($start));
 
         return $dto;
     }
@@ -296,6 +365,8 @@ trait DtoConstructorTrait
      */
     public static function fromEmpty(): static
     {
+        $start = static::startTime();
+
         $arguments = static::fireEvent('prepareEmpty', [], static::class);
 
         foreach (static::getConstructorParameters() as $parameter) {
@@ -347,6 +418,13 @@ trait DtoConstructorTrait
                 }
             }
 
+            if ($value === null) {
+                $methodByDefault = 'default' . ucfirst(Str::camel($name));
+                if (method_exists(static::class, $methodByDefault)) {
+                    $value = static::$methodByDefault();
+                }
+            }
+
             $arguments[$name] = $value;
         }
 
@@ -361,13 +439,20 @@ trait DtoConstructorTrait
                 $key => in_array('null', $types) ? null : static::makeValueByType($type, $types)
             ]);
 
+            if ($value === null) {
+                $methodByDefault = 'default' . ucfirst(Str::camel($key));
+                if (method_exists(static::class, $methodByDefault)) {
+                    $value = static::$methodByDefault();
+                }
+            }
+
             static::$__parameters[static::class][spl_object_id($dto)][$key] = $value;
         }
 
         static::fireEvent('created', [], $dto, $arguments);
         static::fireEvent('fromEmpty', [], $dto, $arguments);
 
-        $dto->log('createdFromEmpty', $arguments);
+        $dto->log('createdFromEmpty', [], ms: static::endTime($start));
 
         return $dto;
     }

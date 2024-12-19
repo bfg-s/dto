@@ -4,13 +4,27 @@ declare(strict_types=1);
 
 namespace Bfg\Dto\Traits;
 
+use Bfg\Dto\Collections\DtoCollection;
 use Bfg\Dto\Dto;
 use Bfg\Dto\Exceptions\DtoPropertyAreImmutableException;
 use Bfg\Dto\Exceptions\DtoPropertyDoesNotExistException;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 trait DtoMagicTrait
 {
+    public function __call(string $name, array $arguments)
+    {
+        if ($model = $this->model()) {
+
+            return $model->{$name}(...$arguments);
+        }
+
+        return null;
+    }
+
     /**
      * Disable the ability to set properties.
      *
@@ -21,7 +35,7 @@ trait DtoMagicTrait
      */
     public function __set($name, $value)
     {
-        if (array_key_exists($name, static::$extends)) {
+        if (array_key_exists($name, (array) static::$extends)) {
 
             $this->set($name, $value);
         }
@@ -38,17 +52,17 @@ trait DtoMagicTrait
      */
     public function __get(string $name)
     {
+        $start = static::startTime();
         if (array_key_exists($name, static::$extends)) {
 
             return static::$__parameters[static::class][spl_object_id($this)][$name] ?? null;
         }
 
         if (method_exists($this, $name)) {
-            $this->log("computed" . ucfirst(Str::camel($name)), compact('name'));
+            $this->log("computed" . ucfirst(Str::camel($name)), compact('name'), static::endTime($start));
             return $this->{$name}();
         }
 
-        // check is name starts with "lazy"
         if (Str::startsWith($name, 'lazy')) {
             $originalName = $name;
             $name = Str::of($name)->replaceFirst('lazy', '')->snake()->camel()->toString();
@@ -56,10 +70,10 @@ trait DtoMagicTrait
                 return static::$__lazyCache[static::class][spl_object_id($this)][$name];
             }
             if (method_exists($this, $name)) {
-                $this->log($originalName, compact('name'));
+                $this->log($originalName, compact('name'), static::endTime($start));
                 return static::$__lazyCache[static::class][spl_object_id($this)][$name] = $this->{$name}();
             } else if ($this->has($name)) {
-                $this->log($originalName, compact('name'));
+                $this->log($originalName, compact('name'), static::endTime($start));
                 return static::$__lazyCache[static::class][spl_object_id($this)][$name] = $this->get($name);
             }
         }
@@ -67,6 +81,11 @@ trait DtoMagicTrait
         if ($this->has($name)) {
 
             return $this->get($name);
+        }
+
+        if ($model = $this->model()) {
+
+            return $model->{$name};
         }
 
         throw new DtoPropertyDoesNotExistException($name);
@@ -90,6 +109,8 @@ trait DtoMagicTrait
      */
     public function __clone(): void
     {
+        $start = static::startTime();
+
         $vars = static::fireEvent('clone', $this->vars(), static::SET_CURRENT_DATA, $this);
 
         foreach ($vars as $key => $get_object_var) {
@@ -102,7 +123,7 @@ trait DtoMagicTrait
             }
         }
 
-        $this->log('clonedFrom', compact('vars'));
+        $this->log('clonedFrom', compact('vars'), static::endTime($start));
     }
 
     /**
@@ -112,8 +133,10 @@ trait DtoMagicTrait
      */
     public function __toString(): string
     {
-        $this->log('ConvertedToString');
-        return $this->toJson();
+        $start = static::startTime();
+        $result = $this->toJson();
+        $this->log('ConvertedToString', ms: static::endTime($start));
+        return $result;
     }
 
     /**
@@ -123,10 +146,31 @@ trait DtoMagicTrait
      */
     public function __serialize(): array
     {
+        $start = static::startTime();
         static::$__strictToArray = true;
-        $this->log('serialized');
-        $result = static::fireEvent('serialize', $this->toArray(), static::SET_CURRENT_DATA, $this);
-        $result['__meta'] = $this->getMeta();
+        $result = static::fireEvent('serialize', $this->vars(), static::SET_CURRENT_DATA, $this);
+        foreach ($result as $key => $item) {
+            if ($item instanceof Dto) {
+                $result[$key] = $item->toSerialize();
+            } else if ($item instanceof DtoCollection) {
+                $result[$key] = $item->toSerialize();
+            } else if ($item instanceof Carbon) {
+                $result[$key] = $item->format((string) static::$dateFormat);
+            } else if ($item instanceof Model) {
+                $result[$key] = $item->id;
+            } else if (is_object($item)) {
+                unset($result[$key]);
+            }
+        }
+
+        $result['__meta'] = static::$__meta[static::class][spl_object_id($this)] ?? [];
+        $result['__model'] = static::$__models[static::class][spl_object_id($this)] ?? null;
+        if ($result['__model']) {
+            $result['__model'] = base64_encode(serialize($result['__model']));
+        }
+        $this->log('serialized', ms: static::endTime($start));
+        $result['__logs'] = static::$__logs[static::class][spl_object_id($this)] ?? [];
+
         return $result;
     }
 
@@ -138,11 +182,18 @@ trait DtoMagicTrait
      */
     public function __unserialize(array $data): void
     {
+        $start = static::startTime();
         $this->setMeta($data['__meta'] ?? []);
-        unset($data['__meta']);
+        static::$__logs[static::class][spl_object_id($this)] = $data['__logs'] ?? [];
+        if ($data['__model']) {
+            static::$__models[static::class][spl_object_id($this)] = unserialize(base64_decode($data['__model']));
+        }
+        unset($data['__meta'], $data['__logs'], $data['__model']);
         $data = static::fireEvent('unserialize', $data, static::SET_CURRENT_DATA, $this);
+        static::$__logMute = true;
         $this->fill($data);
-        $this->log('unserialized', $data);
+        static::$__logMute = false;
+        $this->log('unserialized', $data, static::endTime($start));
     }
 
     /**
@@ -159,6 +210,11 @@ trait DtoMagicTrait
             $add['logs'] = $this->logs();
         }
 
+        if ($model = $this->model()) {
+
+            $add['model'] = $model;
+        }
+
         return array_merge(
             static::$__parameters[static::class][spl_object_id($this)] ?? [],
             ['meta' => $this->getMeta()],
@@ -171,11 +227,13 @@ trait DtoMagicTrait
      */
     public function __destruct()
     {
-        $this->log('destruct');
+        $start = static::startTime();
 
         static::fireEvent('destruct', null, $this);
 
         unset(
+            static::$__models[static::class][spl_object_id($this)],
+            static::$__logStartTime[static::class][spl_object_id($this)],
             static::$__parameters[static::class][spl_object_id($this)],
             static::$__originals[static::class][spl_object_id($this)],
             static::$__lazyCache[static::class][spl_object_id($this)],
@@ -183,5 +241,7 @@ trait DtoMagicTrait
             static::$__meta[static::class][spl_object_id($this)],
             static::$__vars[static::class][spl_object_id($this)],
         );
+
+        $this->log('destruct', ms: static::endTime($start));
     }
 }

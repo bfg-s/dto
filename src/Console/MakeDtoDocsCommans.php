@@ -100,6 +100,8 @@ class MakeDtoDocsCommans extends Command
                 ]) && ! method_exists(Dto::class, $method->getName())
                 && ! str_starts_with($method->getName(), 'fromArray')
                 && ! str_starts_with($method->getName(), 'toArray')
+                && ! str_starts_with($method->getName(), 'default')
+                && ! str_starts_with($method->getName(), 'source')
                 && ! str_starts_with($method->getName(), 'with')
                 && ! str_starts_with($method->getName(), 'lazy');
         })->values();

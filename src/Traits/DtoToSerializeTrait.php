@@ -15,4 +15,14 @@ trait DtoToSerializeTrait
     {
         return serialize($this);
     }
+
+    public function toCompress()
+    {
+        return base64_encode(gzcompress($this->toSerialize()));
+    }
+
+    public static function uncompress(string $data): static
+    {
+        return unserialize(gzuncompress(base64_decode($data)));
+    }
 }

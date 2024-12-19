@@ -10,7 +10,8 @@ class LogsInnerDto extends Dto
     public function __construct(
         public string $message,
         public mixed $context,
-        public Carbon $timestamp,
+        public string $timestamp,
+        public int|float $ms = 0,
     ) {
     }
 }

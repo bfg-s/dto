@@ -16,6 +16,7 @@ use Bfg\Dto\Traits\DtoMetaTrait;
 use Bfg\Dto\Traits\DtoReflectionTrait;
 use Bfg\Dto\Traits\DtoSystemVariablesTrait;
 use Bfg\Dto\Traits\DtoSystemTrait;
+use Bfg\Dto\Traits\DtoToApiTrait;
 use Bfg\Dto\Traits\DtoToArrayTrait;
 use Bfg\Dto\Traits\DtoToBase64Trait;
 use Bfg\Dto\Traits\DtoToCollectionTrait;
@@ -62,7 +63,9 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess
     use DtoHelpersTrait;
     use DtoSystemTrait;
     use DtoEventsTrait;
-    use DtoMagicTrait;
+    use DtoMagicTrait {
+        DtoMagicTrait::__call as magicCall;
+    }
     use DtoMetaTrait;
     use DtoLogTrait;
 
@@ -74,9 +77,12 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess
     use DtoToArrayTrait;
     use DtoToModelTrait;
     use DtoToJsonTrait;
+    use DtoToApiTrait;
 
     use Conditionable;
-    use Macroable;
+    use Macroable {
+        Macroable::__call as macroCall;
+    }
     use Dumpable;
     use Tappable;
 
@@ -149,4 +155,20 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess
      * @var bool
      */
     protected static bool $postDefault = false;
+
+    /**
+     * Handle dynamic method calls.
+     *
+     * @param string $name
+     * @param array $arguments
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        if (static::hasMacro($name)) {
+            return $this->macroCall($name, $arguments);
+        }
+
+        return $this->magicCall($name, $arguments);
+    }
 }

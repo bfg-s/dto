@@ -65,8 +65,10 @@ trait DtoReflectionTrait
                     '__debugInfo', '__serialize', '__unserialize', '__sleep', '__wakeup'
                 ]) && ! method_exists(Dto::class, $method)
                     && ! str_starts_with($method, 'with')
-                    && ! str_starts_with($method->getName(), 'fromArray')
-                    && ! str_starts_with($method->getName(), 'toArray')
+                    && ! str_starts_with($method, 'fromArray')
+                    && ! str_starts_with($method, 'toArray')
+                    && ! str_starts_with($method, 'default')
+                    && ! str_starts_with($method, 'source')
                     && ! str_starts_with($method, 'lazy');
             })->values()->toArray(),
             'with' => collect(get_class_methods($this))->filter(function ($method) {
