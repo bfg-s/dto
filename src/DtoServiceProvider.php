@@ -24,9 +24,9 @@ class DtoServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->app->new(DtoContract::class, function ($object) {
-
-            return $object::fromRequest(request());
-        });
+//        $this->app->new(DtoContract::class, function ($object) {
+//
+//            return $object::fromRequest(request());
+//        });
     }
 }
