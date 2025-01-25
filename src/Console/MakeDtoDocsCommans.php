@@ -163,7 +163,17 @@ class MakeDtoDocsCommans extends Command
         $lines = array_slice($lines, 1, count($lines) - 2);
 
         foreach ($properties as $property => $type) {
-            if (! str_contains($code, "\${$property}")) {
+
+            if (class_exists($type)) {
+                $type = '\\' . $type;
+            }
+
+            $edited = collect($lines)->filter(fn (string $line) => str_contains($line, "\${$property} "))->each(function (string $line, int $key) use (&$lines, $property, $type) {
+                $lines[$key] = " * @property {$type} \${$property}";
+            })->count();
+
+            if (! $edited && ! str_contains($code, "\${$property}")) {
+
                 $lines[] = " * @property {$type} \${$property}";
             }
         }
