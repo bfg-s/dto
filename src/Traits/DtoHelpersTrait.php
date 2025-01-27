@@ -96,6 +96,19 @@ trait DtoHelpersTrait
     }
 
     /**
+     * Set request keys
+     *
+     * @param  array  $keys
+     * @return $this
+     */
+    public function requestedKeys(array $keys = []): static
+    {
+        static::$__requestKeys[static::class][spl_object_id($this)] = $keys;
+
+        return $this;
+    }
+
+    /**
      * @return DiagnoseDto
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */

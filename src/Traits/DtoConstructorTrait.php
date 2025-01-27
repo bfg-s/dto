@@ -325,6 +325,7 @@ trait DtoConstructorTrait
         static::fireEvent('created', [], $dto, $arguments);
         static::fireEvent('fromRequest', [], $dto, $arguments);
 
+        $dto->requestedKeys(array_keys($data ?: []));
         $dto->log('createdFromRequest', [], ms: static::endTime($start));
 
         return $dto;

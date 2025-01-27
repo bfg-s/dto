@@ -51,10 +51,14 @@ trait DtoToArrayTrait
             // 'version' => static::$version
         ];
         $originals = $this->originals();
+        $keysOnly = static::$__requestKeys[static::class][spl_object_id($this)] ?? [];
 
         foreach ($parameters as $parameter) {
             $key = $parameter->getName();
             if (in_array($key, static::$hidden) && ! static::$__strictToArray) {
+                continue;
+            }
+            if ($keysOnly && ! in_array($key, $keysOnly)) {
                 continue;
             }
             $value = $this->{$key} ?? null;
@@ -133,6 +137,9 @@ trait DtoToArrayTrait
         foreach (static::$extends as $key => $types) {
 
             if (in_array($key, static::$hidden) && ! static::$__strictToArray) {
+                continue;
+            }
+            if ($keysOnly && ! in_array($key, $keysOnly)) {
                 continue;
             }
             $foreign = false;

@@ -10,7 +10,6 @@ use Bfg\Dto\Exceptions\DtoPropertyAreImmutableException;
 use Bfg\Dto\Exceptions\DtoPropertyDoesNotExistException;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 trait DtoMagicTrait
@@ -234,6 +233,7 @@ trait DtoMagicTrait
         unset(
             static::$__models[static::class][spl_object_id($this)],
             static::$__logStartTime[static::class][spl_object_id($this)],
+            static::$__requestKeys[static::class][spl_object_id($this)],
             static::$__parameters[static::class][spl_object_id($this)],
             static::$__originals[static::class][spl_object_id($this)],
             static::$__lazyCache[static::class][spl_object_id($this)],
