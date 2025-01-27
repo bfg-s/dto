@@ -4,12 +4,9 @@ namespace Bfg\Dto\Console;
 
 use Illuminate\Console\GeneratorCommand;
 use Illuminate\Support\Str;
-use TomatoPHP\ConsoleHelpers\Traits\RunCommand;
 
 class MakeDtoCastCommand extends GeneratorCommand
 {
-    use RunCommand;
-
     /**
      * The name and signature of the console command.
      *
