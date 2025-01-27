@@ -79,6 +79,23 @@ trait DtoHelpersTrait
     }
 
     /**
+     * Get the property names of the dto
+     *
+     * @param ...$keys
+     * @return array
+     */
+    public function only(...$keys): array
+    {
+        $result = [];
+
+        foreach ($keys as $key) {
+            $result[$key] = $this->get($key);
+        }
+
+        return $result;
+    }
+
+    /**
      * @return DiagnoseDto
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
