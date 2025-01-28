@@ -28,7 +28,6 @@ use Bfg\Dto\Traits\DtoToStringTrait;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Traits\Conditionable;
-use Illuminate\Support\Traits\Dumpable;
 use Illuminate\Support\Traits\Macroable;
 use Illuminate\Support\Traits\Tappable;
 
@@ -83,7 +82,6 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess
     use Macroable {
         Macroable::__call as macroCall;
     }
-    use Dumpable;
     use Tappable;
 
     /**
