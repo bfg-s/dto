@@ -247,7 +247,7 @@ trait DtoConstructorTrait
     public static function fromModel(Model $model = null): static
     {
         $start = static::startTime();
-        $model = static::withModel($model);
+        $model = static::configureModel($model);
         $data = static::fireEvent('prepareModel', [], static::SET_CURRENT_DATA);
         [$dto, $arguments] = static::makeInstanceFromArray($data, $model);
         static::$__models[static::class][spl_object_id($dto)] = $model;

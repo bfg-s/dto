@@ -619,7 +619,7 @@ trait DtoSystemTrait
      * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return \Illuminate\Database\Eloquent\Model
      */
-    protected static function withModel(Model $model): Model
+    protected static function configureModel(Model $model): Model
     {
         return $model;
     }
