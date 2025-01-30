@@ -230,16 +230,19 @@ trait DtoMagicTrait
 
         static::fireEvent('destruct', null, $this);
 
+        $objectId = spl_object_id($this);
+
         unset(
-            static::$__models[static::class][spl_object_id($this)],
-            static::$__logStartTime[static::class][spl_object_id($this)],
-            static::$__requestKeys[static::class][spl_object_id($this)],
-            static::$__parameters[static::class][spl_object_id($this)],
-            static::$__originals[static::class][spl_object_id($this)],
-            static::$__lazyCache[static::class][spl_object_id($this)],
-            static::$__logs[static::class][spl_object_id($this)],
-            static::$__meta[static::class][spl_object_id($this)],
-            static::$__vars[static::class][spl_object_id($this)],
+            static::$__logStartTime[static::class][$objectId],
+            static::$__requestKeys[static::class][$objectId],
+            static::$__parameters[static::class][$objectId],
+            static::$__originals[static::class][$objectId],
+            static::$__lazyCache[static::class][$objectId],
+            static::$__settings[static::class][$objectId],
+            static::$__models[static::class][$objectId],
+            static::$__logs[static::class][$objectId],
+            static::$__meta[static::class][$objectId],
+            static::$__vars[static::class][$objectId],
         );
 
         $this->log('destruct', ms: static::endTime($start));

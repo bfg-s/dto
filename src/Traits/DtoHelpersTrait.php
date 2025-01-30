@@ -109,6 +109,44 @@ trait DtoHelpersTrait
     }
 
     /**
+     * @return $this
+     */
+    public function camelKeys(): static
+    {
+        return $this->setSetting('camelKeys', true);
+    }
+
+    /**
+     * @return $this
+     */
+    public function snakeKeys(): static
+    {
+        return $this->setSetting('snakeKeys', true);
+    }
+
+    /**
+     * @param  string  $key
+     * @param  mixed  $value
+     * @return $this
+     */
+    public function setSetting(string $key, mixed $value): static
+    {
+        static::$__settings[static::class][spl_object_id($this)][$key] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param  string  $key
+     * @param  mixed|null  $default
+     * @return mixed
+     */
+    public function getSetting(string $key, mixed $default = null): mixed
+    {
+        return static::$__settings[static::class][spl_object_id($this)][$key] ?? $default;
+    }
+
+    /**
      * @return DiagnoseDto
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */

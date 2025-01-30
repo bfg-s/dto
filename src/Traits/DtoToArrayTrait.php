@@ -269,7 +269,30 @@ trait DtoToArrayTrait
             static::$__strictToArray = false;
         }
 
+        $isSnakeKeys = $this->getSetting('snakeKeys', false);
+        $isCamelKeys = $this->getSetting('camelKeys', false);
+
+        if ($isSnakeKeys) {
+            $result = $this->recursiveChangeKeyCaseFromArray($result, 'snake');
+        }
+
+        if ($isCamelKeys) {
+            $result = $this->recursiveChangeKeyCaseFromArray($result, 'camel');
+        }
+
         return $result;
+    }
+
+    /**
+     * @param  array  $array
+     * @param  string  $case
+     * @return array
+     */
+    protected function recursiveChangeKeyCaseFromArray(array $array, string $case): array
+    {
+        return collect($array)->mapWithKeys(fn($value, $key) => [
+            Str::of($key)->{$case}()->toString() => is_array($value) ? $this->recursiveChangeKeyCaseFromArray($value, $case) : $value
+        ])->toArray();
     }
 
     /**

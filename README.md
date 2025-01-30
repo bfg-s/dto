@@ -1438,6 +1438,18 @@ $dto->pipeline([
 ]);
 ```
 
+#### camelKeys
+You can use the `camelKeys` helper for converting the DTO keys to camel case when converting to an array.
+```php
+$dto->camelKeys()->toArray();
+```
+
+#### snakeKeys
+You can use the `snakeKeys` helper for converting the DTO keys to snake case when converting to an array.
+```php
+$dto->snakeKeys()->toArray();
+```
+
 #### cache
 You can use the `cache` helper for caching the DTO.
 ```php

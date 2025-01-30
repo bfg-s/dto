@@ -170,5 +170,13 @@ trait DtoSystemVariablesTrait
      */
     protected static array $__models = [];
 
+    /**
+     * @var array
+     */
     protected static array $__requestKeys = [];
+
+    /**
+     * @var array
+     */
+    protected static array $__settings = [];
 }
