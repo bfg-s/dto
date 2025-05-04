@@ -410,10 +410,9 @@ trait DtoSystemTrait
             ) {
                 $value = isset($data[$nameInData]) ? new $class($data[$nameInData]) : app($class);
             } else {
-                if (! enum_exists($class)) {
+                $value = $data[$nameInData] ?? null;
+                if (! $value && ! enum_exists($class)) {
                     $value = app($class);
-                } else {
-                    $value = $data[$nameInData] ?? null;
                 }
             }
         } else {
