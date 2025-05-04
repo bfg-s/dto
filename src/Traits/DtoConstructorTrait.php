@@ -169,13 +169,17 @@ trait DtoConstructorTrait
     /**
      * Make dto instances from collection array
      *
-     * @param  array  $items
+     * @param  \Illuminate\Support\Collection|array  $items
      * @param  mixed  ...$other
      * @return DtoCollection
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromCollection(array $items, ...$other): DtoCollection
+    public static function fromCollection(Collection|array $items, ...$other): DtoCollection
     {
+        if ($items instanceof Collection) {
+            $items = $items->toArray();
+        }
+
         return new DtoCollection(array_filter(array_map(function ($item) use ($other) {
             return static::fromAnything($item, ...$other);
         }, $items)));
@@ -217,7 +221,7 @@ trait DtoConstructorTrait
         } else if ($item instanceof Dto) {
             return $item;
         } else if ($item instanceof Collection) {
-            return static::fromCollection($item->toArray());
+            return static::fromCollection($item);
         }
         return static::fromEmpty();
     }

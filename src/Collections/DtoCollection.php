@@ -16,4 +16,15 @@ use Illuminate\Support\Collection;
 class DtoCollection extends Collection
 {
     use DtoCollectionMethodsTrait;
+
+    /**
+     * Create a new collection.
+     *
+     * @param  \Illuminate\Contracts\Support\Arrayable<TKey, TValue>|iterable<TKey, TValue>|null  $items
+     * @return void
+     */
+    public function __construct($items = [])
+    {
+        parent::__construct($items);
+    }
 }
