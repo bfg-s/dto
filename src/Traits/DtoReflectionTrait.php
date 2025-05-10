@@ -152,7 +152,7 @@ trait DtoReflectionTrait
                         $relations[] = $key;
                     }
                 }
-}
+            }
         }
 
         return $relations;
@@ -176,11 +176,11 @@ trait DtoReflectionTrait
                 $class = $type->getName();
                 if (is_subclass_of($class, Dto::class)) {
                     $properties[] = $parameter->getName();
-                } else if (is_subclass_of($class, Collection::class) || $class === Collection::class) {
+                } elseif (is_subclass_of($class, Collection::class) || $class === Collection::class) {
                     $properties[] = $parameter->getName();
-                } else if (is_subclass_of($class, Model::class)) {
+                } elseif (is_subclass_of($class, Model::class)) {
                     $properties[] = $parameter->getName();
-                } else if (is_subclass_of($class, Carbon::class) || $class === Carbon::class) {
+                } elseif (is_subclass_of($class, Carbon::class) || $class === Carbon::class) {
                     $properties[] = $parameter->getName();
                 }
             }

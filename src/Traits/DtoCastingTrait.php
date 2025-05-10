@@ -64,7 +64,7 @@ trait DtoCastingTrait
             case 'double':
                 return static::fromFloat($value);
             case 'decimal':
-                return static::asDecimal($value, explode(':', static::$cast[$key], 2)[1]);
+                return static::asDecimal($value, (int) explode(':', static::$cast[$key], 2)[1]);
             case 'string':
                 return (string) $value;
             case 'bool':
@@ -117,7 +117,9 @@ trait DtoCastingTrait
         $attributes = array_replace(
             $attributes,
             static::normalizeCastClassResponse($key, $caster->set(
-                $key, $value, $attributes
+                $key,
+                $value,
+                $attributes
             ))
         );
 
@@ -153,7 +155,8 @@ trait DtoCastingTrait
             return static::getStorableEnumValue($enumClass, $value);
         } else {
             return static::getStorableEnumValue(
-                $enumClass, static::getEnumCaseFromValue($enumClass, $value)
+                $enumClass,
+                static::getEnumCaseFromValue($enumClass, $value)
             );
         }
     }
@@ -357,7 +360,8 @@ trait DtoCastingTrait
         }
         if ($value instanceof DateTimeInterface) {
             return Date::parse(
-                $value->format('Y-m-d H:i:s.u'), $value->getTimezone()
+                $value->format('Y-m-d H:i:s.u'),
+                $value->getTimezone()
             );
         }
 
@@ -485,7 +489,7 @@ trait DtoCastingTrait
             $convertedCastType = 'decimal';
         } elseif ($castType && class_exists($castType)) {
             $convertedCastType = $castType;
-        } else if ($castType) {
+        } elseif ($castType) {
             $convertedCastType = trim(strtolower($castType));
         }
 

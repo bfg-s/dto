@@ -1,8 +1,7 @@
 <?php
+
 namespace Bfg\Dto\Tests\Unit;
 
-use Bfg\Dto\Collections\DtoCollection;
-use Bfg\Dto\Tests\Test2Dto;
 use Bfg\Dto\Tests\TestDto;
 use PHPUnit\Framework\TestCase;
 

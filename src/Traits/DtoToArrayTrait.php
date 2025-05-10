@@ -16,7 +16,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
 trait DtoToArrayTrait
@@ -27,7 +26,7 @@ trait DtoToArrayTrait
      */
     public function toArrayOnly(string ...$keys): array
     {
-        return array_filter($this->toArray(), fn($key) => in_array($key, $keys), ARRAY_FILTER_USE_KEY);
+        return array_filter($this->toArray(), fn ($key) => in_array($key, $keys), ARRAY_FILTER_USE_KEY);
     }
 
     /**
@@ -36,7 +35,7 @@ trait DtoToArrayTrait
      */
     public function toArrayExclude(string ...$keys): array
     {
-        return array_filter($this->toArray(), fn($key) => ! in_array($key, $keys), ARRAY_FILTER_USE_KEY);
+        return array_filter($this->toArray(), fn ($key) => ! in_array($key, $keys), ARRAY_FILTER_USE_KEY);
     }
 
     /**
@@ -249,7 +248,7 @@ trait DtoToArrayTrait
         foreach ($result as $key => $value) {
             if (static::isEnumCastable($key)) {
                 $result[$key] = static::setEnumCastableAttribute($key, $value);
-            } else if (static::isClassCastable($key)) {
+            } elseif (static::isClassCastable($key)) {
                 $result[$key] = static::setClassCastableAttribute($key, $value, $result);
             }
         }
@@ -290,7 +289,7 @@ trait DtoToArrayTrait
      */
     protected function recursiveChangeKeyCaseFromArray(array $array, string $case): array
     {
-        return collect($array)->mapWithKeys(fn($value, $key) => [
+        return collect($array)->mapWithKeys(fn ($value, $key) => [
             Str::of($key)->{$case}()->toString() => is_array($value) ? $this->recursiveChangeKeyCaseFromArray($value, $case) : $value
         ])->toArray();
     }

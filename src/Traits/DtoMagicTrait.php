@@ -71,7 +71,7 @@ trait DtoMagicTrait
             if (method_exists($this, $name)) {
                 $this->log($originalName, compact('name'), static::endTime($start));
                 return static::$__lazyCache[static::class][spl_object_id($this)][$name] = $this->{$name}();
-            } else if ($this->has($name)) {
+            } elseif ($this->has($name)) {
                 $this->log($originalName, compact('name'), static::endTime($start));
                 return static::$__lazyCache[static::class][spl_object_id($this)][$name] = $this->get($name);
             }
@@ -151,13 +151,13 @@ trait DtoMagicTrait
         foreach ($result as $key => $item) {
             if ($item instanceof Dto) {
                 $result[$key] = $item->toSerialize();
-            } else if ($item instanceof DtoCollection) {
+            } elseif ($item instanceof DtoCollection) {
                 $result[$key] = $item->toSerialize();
-            } else if ($item instanceof Carbon) {
+            } elseif ($item instanceof Carbon) {
                 $result[$key] = $item->format((string) static::$dateFormat);
-            } else if ($item instanceof Model) {
+            } elseif ($item instanceof Model) {
                 $result[$key] = $item->id;
-            } else if (is_object($item)) {
+            } elseif (is_object($item)) {
                 unset($result[$key]);
             }
         }

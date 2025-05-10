@@ -1,4 +1,5 @@
 <?php
+
 namespace Bfg\Dto\Tests;
 
 use Bfg\Dto\Dto;
@@ -21,5 +22,6 @@ class TestDto extends Dto
         public string|null $email,
         public Test2Dto $test,
         public Test2Dto|array $tests,
-    ) {}
+    ) {
+    }
 }

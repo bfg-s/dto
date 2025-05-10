@@ -11,5 +11,6 @@ class ToDoDto extends Dto
         public int $id,
         public string $title,
         public bool $completed,
-    ) {}
+    ) {
+    }
 }

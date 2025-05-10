@@ -93,7 +93,8 @@ trait DtoSystemTrait
                 try {
                     $arguments[$key]
                         = static::currentEncrypter()->decrypt($arguments[$key]);
-                } catch (\Throwable) {}
+                } catch (\Throwable) {
+                }
             }
         }
 
@@ -207,8 +208,18 @@ trait DtoSystemTrait
         }
 
         $methodDefault = 'default' . ucfirst(Str::camel($name));
-        if ($type->isBuiltin() && (! array_key_exists($nameInData, $data) && ! $parameter->isDefaultValueAvailable()) && ! $type->allowsNull() && ! method_exists(static::class, $methodDefault)) {
-            throw new DtoUndefinedArrayKeyException($nameInData . ($notFoundKeys ? ', ' . implode(', ', $notFoundKeys) : ''));
+        if (
+            $type->isBuiltin()
+            && (
+                ! array_key_exists($nameInData, $data)
+                && ! $parameter->isDefaultValueAvailable()
+            )
+            && ! $type->allowsNull()
+            && ! method_exists(static::class, $methodDefault)
+        ) {
+            throw new DtoUndefinedArrayKeyException(
+                $nameInData . ($notFoundKeys ? ', ' . implode(', ', $notFoundKeys) : '')
+            );
         }
 
         if (! $type->isBuiltin() && ! $isOtherParam) {
@@ -224,9 +235,9 @@ trait DtoSystemTrait
                 }
             }
         } else {
-            $value = $data[$nameInData] ?? null;
+            $value = $data[$nameInData]
+                ?? ($parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null);
         }
-
         $value = static::fireEvent(['created', $name], $value, static::SET_CURRENT_DATA, $data, $parameter);
         $value = static::transformAttribute($name, $value);
 
@@ -404,7 +415,7 @@ trait DtoSystemTrait
         if (! is_subclass_of($class, Carbon::class) && $class !== Carbon::class) {
             if (is_subclass_of($class, Collection::class) || $class === Collection::class) {
                 $value = new DtoCollection($data[$nameInData]);
-            } else if (
+            } elseif (
                 (is_subclass_of($class, FormRequest::class) || $class === FormRequest::class)
                 || (is_subclass_of($class, Request::class) || $class === Request::class)
             ) {
@@ -422,7 +433,7 @@ trait DtoSystemTrait
 
                 if (is_numeric($value)) {
                     $value = Carbon::createFromTimestamp($value);
-                } else if ($value) {
+                } elseif ($value) {
                     $value = Carbon::parse($value);
                 }
             }
@@ -453,7 +464,7 @@ trait DtoSystemTrait
             if (! $value && ! $allowsNull) {
                 throw new DtoModelBindingFailException($class, 'id', $val);
             }
-        } else if (is_string($val)) {
+        } elseif (is_string($val)) {
             $exploded = explode(':', $val);
             if (count($exploded) === 2) {
                 $value = $class::where($exploded[0], $exploded[1])->first();
@@ -461,13 +472,13 @@ trait DtoSystemTrait
                     throw new DtoModelBindingFailException($class, $exploded[0], $exploded[1]);
                 }
             } else {
-                $firstFieldFromFillable = (new $class)->getFillable()[0] ?? 'id';
+                $firstFieldFromFillable = (new $class())->getFillable()[0] ?? 'id';
                 $value = $class::where($firstFieldFromFillable, $val)->first();
                 if (! $value && ! $allowsNull) {
                     throw new DtoModelBindingFailException($class, $firstFieldFromFillable, $val);
                 }
             }
-        } else if (is_array($val)) {
+        } elseif (is_array($val)) {
             $value = new $class($val);
         } else {
             $value = $val;
@@ -507,7 +518,7 @@ trait DtoSystemTrait
             if (is_string($namedData)) {
                 if (static::isSerialize($namedData)) {
                     $value = unserialize($namedData);
-                } else if (static::isJson($namedData)) {
+                } elseif (static::isJson($namedData)) {
                     $value = new DtoCollection(json_decode($namedData, true));
                 }
             } else {
@@ -517,7 +528,7 @@ trait DtoSystemTrait
                     $value->push($class::fromAnything($item));
                 }
             }
-        } else if ($hasArray) {
+        } elseif ($hasArray) {
             $value = $allowsNull ? null : [];
             foreach ($namedData as $item) {
                 $value[] = $class::fromAnything($item);
@@ -546,7 +557,7 @@ trait DtoSystemTrait
     /**
      * Get dto constructor parameters
      *
-     * @return \ReflectionParameter[]|array
+     * @return \ReflectionParameter[]|array<int, \ReflectionParameter>
      */
     public static function getConstructorParameters(): array
     {
@@ -597,15 +608,15 @@ trait DtoSystemTrait
 
         if ($type === 'string' || in_array('string', $types)) {
             $value = "";
-        } else if ($type === 'int' || in_array('int', $types)) {
+        } elseif ($type === 'int' || in_array('int', $types)) {
             $value = 0;
-        } else if ($type === 'float' || in_array('float', $types)) {
+        } elseif ($type === 'float' || in_array('float', $types)) {
             $value = 0.0;
-        } else if ($type === 'bool' || in_array('bool', $types)) {
+        } elseif ($type === 'bool' || in_array('bool', $types)) {
             $value = false;
-        } else if ($type === 'array' || in_array('array', $types)) {
+        } elseif ($type === 'array' || in_array('array', $types)) {
             $value = [];
-        } else if ($type === 'object' || in_array('object', $types)) {
+        } elseif ($type === 'object' || in_array('object', $types)) {
             $value = new \stdClass();
         }
 

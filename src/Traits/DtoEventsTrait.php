@@ -8,7 +8,7 @@ use Bfg\Dto\Exceptions\DtoEventNotFoundException;
 
 trait DtoEventsTrait
 {
-    const SET_CURRENT_DATA = '__data__';
+    public const SET_CURRENT_DATA = '__data__';
 
     /**
      * @return void
@@ -72,7 +72,7 @@ trait DtoEventsTrait
         }
         $callbacks = array_merge(
             static::$__events[static::class][$event] ?? [],
-                static::$__events['global'][$event] ?? [],
+            static::$__events['global'][$event] ?? [],
         );
 
         if ($callbacks) {

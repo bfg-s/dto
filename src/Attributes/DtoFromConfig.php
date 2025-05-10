@@ -4,7 +4,7 @@ namespace Bfg\Dto\Attributes;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_PARAMETER|Attribute::TARGET_PROPERTY)]
+#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
 class DtoFromConfig
 {
     public function __construct(

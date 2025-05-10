@@ -199,28 +199,28 @@ trait DtoConstructorTrait
             } else {
                 return static::fromCollection($item);
             }
-        } else if (is_string($item)) {
+        } elseif (is_string($item)) {
             if (filter_var($item, FILTER_VALIDATE_URL) !== false) {
                 if (static::$postDefault) {
                     return static::fromPost($item, ...$other);
                 }
                 return static::fromGet($item, ...$other);
-            } else if (static::isJson($item)) {
+            } elseif (static::isJson($item)) {
                 return static::fromJson($item);
-            } else if (static::isSerialize($item)) {
+            } elseif (static::isSerialize($item)) {
                 return static::fromSerialize($item);
-            } else if (class_exists($item)) {
+            } elseif (class_exists($item)) {
                 if (is_subclass_of($item, Request::class)) {
                     return static::fromRequest($item);
                 }
             }
-        } else if ($item instanceof Model) {
+        } elseif ($item instanceof Model) {
             return static::fromModel($item);
-        } else if ($item instanceof Request) {
+        } elseif ($item instanceof Request) {
             return static::fromRequest($item);
-        } else if ($item instanceof Dto) {
+        } elseif ($item instanceof Dto) {
             return $item;
-        } else if ($item instanceof Collection) {
+        } elseif ($item instanceof Collection) {
             return static::fromCollection($item);
         }
         return static::fromEmpty();
@@ -319,7 +319,7 @@ trait DtoConstructorTrait
         if ($request instanceof FormRequest) {
             $data = static::fireEvent('prepareRequest', $request?->validated() ?: [], static::SET_CURRENT_DATA);
             [$dto, $arguments] = static::makeInstanceFromArray($data);
-        } else if ($request instanceof Request) {
+        } elseif ($request instanceof Request) {
             $data = static::fireEvent('prepareRequest', $request?->all() ?: [], static::SET_CURRENT_DATA);
             [$dto, $arguments] = static::makeInstanceFromArray($data);
         } else {
@@ -388,7 +388,7 @@ trait DtoConstructorTrait
                     if ($unionType->getName() === 'array') {
                         $type = $unionType;
                         break;
-                    } else if (! $unionType->isBuiltin()) {
+                    } elseif (! $unionType->isBuiltin()) {
                         $class = $unionType->getName();
                         if (is_subclass_of($class, Collection::class) || $class === Collection::class) {
                             $type = $unionType;
@@ -409,7 +409,11 @@ trait DtoConstructorTrait
             }
 
             $data = [
-                $name => $type->allowsNull() ? null : static::makeValueByType($type->getName(), $types)
+                $name => $parameter->isDefaultValueAvailable()
+                    ? $parameter->getDefaultValue()
+                    : (! $type->allowsNull()
+                        ? static::makeValueByType($type->getName(), $types)
+                        : null)
             ];
 
             [$name, $value] = static::createNameValueFromProperty($parameter, $data);
@@ -418,7 +422,7 @@ trait DtoConstructorTrait
                 $class = $type->getName();
                 if (is_subclass_of($class, Dto::class)) {
                     $value = $class::fromEmpty();
-                } else if (is_subclass_of($class, Collection::class) || $class === Collection::class) {
+                } elseif (is_subclass_of($class, Collection::class) || $class === Collection::class) {
                     $value = new DtoCollection();
                 }
             }

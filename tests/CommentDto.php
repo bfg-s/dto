@@ -12,5 +12,6 @@ class CommentDto extends Dto
         public string $name,
         public string $email,
         public string $body,
-    ) {}
+    ) {
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace Bfg\Dto\Tests\Feature;
 
 use Bfg\Dto\Collections\DtoCollection;

@@ -3,7 +3,6 @@
 namespace Bfg\Dto\Default;
 
 use Bfg\Dto\Dto;
-use Carbon\Carbon;
 
 class LogsInnerDto extends Dto
 {

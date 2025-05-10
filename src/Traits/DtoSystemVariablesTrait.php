@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Bfg\Dto\Traits;
 
-use Carbon\Carbon;
 use Illuminate\Contracts\Encryption\Encrypter;
 
 trait DtoSystemVariablesTrait

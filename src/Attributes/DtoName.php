@@ -4,7 +4,7 @@ namespace Bfg\Dto\Attributes;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_PARAMETER|Attribute::TARGET_PROPERTY|Attribute::IS_REPEATABLE)]
+#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY | Attribute::IS_REPEATABLE)]
 class DtoName
 {
     public function __construct(

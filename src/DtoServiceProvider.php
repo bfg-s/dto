@@ -7,7 +7,6 @@ use Bfg\Dto\Console\MakeDtoCommand;
 use Bfg\Dto\Console\MakeDtoDocsCommans;
 use Illuminate\Support\ServiceProvider;
 
-
 class DtoServiceProvider extends ServiceProvider
 {
     public function register(): void
@@ -23,9 +22,9 @@ class DtoServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-//        $this->app->new(DtoContract::class, function ($object) {
-//
-//            return $object::fromRequest(request());
-//        });
+        //        $this->app->new(DtoContract::class, function ($object) {
+        //
+        //            return $object::fromRequest(request());
+        //        });
     }
 }

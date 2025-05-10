@@ -17,18 +17,27 @@ use Illuminate\Support\Stringable;
 
 trait DtoHelpersTrait
 {
-    const GET_LENGTH_SERIALIZE = 1;
-    const GET_LENGTH_JSON = 2;
+    public const GET_LENGTH_SERIALIZE = 1;
+    public const GET_LENGTH_JSON = 2;
 
     /**
      * Make new instance from args
      *
-     * @param ...$args
+     * @param array ...$args
      * @return static
      */
     public static function new(...$args): static
     {
-        return static::fromArray($args);
+        $parameters = static::getConstructorParameters();
+        $args = collect($args)->mapWithKeys(function ($item, $key) use ($parameters) {
+            return [
+                is_int($key) ? $parameters[$key]->getName() : $key => $item
+            ];
+        })->toArray();
+
+        return $args
+            ? static::fromArray($args)
+            : static::fromEmpty();
     }
 
     /**
@@ -324,7 +333,8 @@ trait DtoHelpersTrait
                 try {
                     $attributes[$key]
                         = static::currentEncrypter()->decrypt($attributes[$key]);
-                } catch (\Throwable) {}
+                } catch (\Throwable) {
+                }
             }
         }
 
@@ -357,7 +367,7 @@ trait DtoHelpersTrait
     {
         if ($type === static::GET_LENGTH_JSON) {
             return strlen($this->toJson());
-        } else if ($type === static::GET_LENGTH_SERIALIZE) {
+        } elseif ($type === static::GET_LENGTH_SERIALIZE) {
             return strlen($this->toSerialize());
         }
         return 0;
@@ -511,7 +521,7 @@ trait DtoHelpersTrait
         $setMutatorMethod = 'fromArray' . ucfirst(Str::camel($key));
 
         if (method_exists(static::class, $setMutatorMethod)) {
-            $value = static::fireEvent(['mutating', $key], $value,static::SET_CURRENT_DATA, $this, $arguments);
+            $value = static::fireEvent(['mutating', $key], $value, static::SET_CURRENT_DATA, $this, $arguments);
             $value = $this->{$setMutatorMethod}($value);
             $value = static::fireEvent(['mutated', $key], $value, static::SET_CURRENT_DATA, $this, $arguments);
         }
@@ -581,7 +591,7 @@ trait DtoHelpersTrait
         }
         if (static::isEnumCastable($key)) {
             $value = static::setEnumCastableAttribute($key, $value);
-        } else if (static::isClassCastable($key)) {
+        } elseif (static::isClassCastable($key)) {
             $value = static::setClassCastableAttribute($key, $value, $this->vars());
         }
 
