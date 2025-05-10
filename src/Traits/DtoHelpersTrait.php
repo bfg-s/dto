@@ -23,7 +23,7 @@ trait DtoHelpersTrait
     /**
      * Make new instance from args
      *
-     * @param array ...$args
+     * @param ...$args
      * @return static
      */
     public static function new(...$args): static
