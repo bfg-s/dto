@@ -522,8 +522,9 @@ trait DtoSystemTrait
                     $value = new DtoCollection(json_decode($namedData, true));
                 }
             } else {
-                $value = new DtoCollection();
-
+                $value = $allowsNull && ! $namedData
+                    ? null
+                    : new DtoCollection();
                 foreach ($namedData as $item) {
                     $value->push($class::fromAnything($item));
                 }
