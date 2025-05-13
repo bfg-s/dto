@@ -525,8 +525,10 @@ trait DtoSystemTrait
                 $value = $allowsNull && ! $namedData
                     ? null
                     : new DtoCollection();
-                foreach ($namedData as $item) {
-                    $value->push($class::fromAnything($item));
+                if ($value && $namedData) {
+                    foreach ($namedData as $item) {
+                        $value->push($class::fromAnything($item));
+                    }
                 }
             }
         } elseif ($hasArray) {
