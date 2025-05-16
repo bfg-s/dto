@@ -346,6 +346,11 @@ trait DtoConstructorTrait
     {
         $start = static::startTime();
 
+        if (! $data) {
+
+            return static::fromEmpty();
+        }
+
         if (! is_assoc($data)) {
 
             return static::fromCollection($data);
