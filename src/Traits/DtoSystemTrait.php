@@ -521,7 +521,9 @@ trait DtoSystemTrait
         Model $model = null,
         string|null $classCollection = null,
     ): mixed {
-        $classCollection = $classCollection ?: DtoCollection::class;
+        $classCollection = is_subclass_of($classCollection, Collection::class)
+            ? $classCollection
+            : DtoCollection::class;
 
         $namedData = array_key_exists($nameInData, $data)
             ? $data[$nameInData]
