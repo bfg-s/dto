@@ -292,6 +292,15 @@ trait DtoSystemTrait
             }
         }
 
+        if ($type instanceof \ReflectionNamedType) {
+            $class = $type->getName();
+            if (is_subclass_of($class, Collection::class) || $class === Collection::class) {
+                $hasCollection = true;
+            } elseif ($class === 'array') {
+                $hasArray = true;
+            }
+        }
+
         return [$type, $hasCollection, $hasArray];
     }
 
@@ -508,6 +517,7 @@ trait DtoSystemTrait
      * @param  array  $data
      * @param  bool  $allowsNull
      * @param  \Illuminate\Database\Eloquent\Model|null  $model
+     * @param  string|null  $classCollection
      * @return mixed
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
