@@ -872,6 +872,19 @@ $dto->unsetMeta('key');
 
 ### Attributes
 You can use attributes.
+#### DtoItem
+You can set `DTO` for `Collection` property
+```php
+class UserDto extends Dto
+{            
+    public function __construct(
+        public string $name,
+        public string $email,
+        #[\Bfg\Dto\Attributes\DtoItem(UserContactDto::class)]
+        public \Bfg\Dto\Collections\DtoCollection $contacts,
+    ) {}
+}
+```
 #### DtoName
 You can use the `DtoName` attribute to add the name of the DTO.
 ```php

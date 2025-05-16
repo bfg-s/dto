@@ -536,15 +536,20 @@ trait DtoHelpersTrait
             if ($parameter) {
                 $type = $parameter->getType();
                 $types = [];
+                $nullable = false;
                 if ($type instanceof \ReflectionUnionType) {
                     foreach ($type->getTypes() as $unionType) {
                         if ($type instanceof \ReflectionUnionType) {
                             $type = $unionType;
                         }
                         $types[] = $unionType->getName();
+                        if ($unionType->getName() === 'null' || $unionType->allowsNull()) {
+                            $nullable = true;
+                        }
                     }
                 }
-                if (! $type->allowsNull()) {
+
+                if (! $type->allowsNull() && ! $nullable) {
 
                     $type = $type->getName();
 

@@ -22,10 +22,10 @@ trait DtoConstructorTrait
     /**
      * @param  string  $sourceName
      * @param ...$arguments
-     * @return \Bfg\Dto\Collections\DtoCollection|\Bfg\Dto\Dto|null
+     * @return Collection|\Bfg\Dto\Dto|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromSource(string $sourceName, ...$arguments): static|DtoCollection|null
+    public static function fromSource(string $sourceName, ...$arguments): static|Collection|null
     {
         $method = 'source' . ucfirst(Str::camel($sourceName));
 
@@ -80,14 +80,14 @@ trait DtoConstructorTrait
      * @param  string  $url
      * @param  array|string|null  $query
      * @param  array  $headers
-     * @return \Bfg\Dto\Collections\DtoCollection|static|null
+     * @return Collection|static|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromGet(
         string $url,
         array|string|null $query = null,
         array $headers = []
-    ): DtoCollection|static|null {
+    ): Collection|static|null {
 
         return static::fromHttp('get', $url, $query, $headers);
     }
@@ -96,14 +96,14 @@ trait DtoConstructorTrait
      * @param  string  $url
      * @param  array  $data
      * @param  array  $headers
-     * @return \Bfg\Dto\Collections\DtoCollection|static|null
+     * @return Collection|static|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromPost(
         string $url,
         array $data = [],
         array $headers = []
-    ): DtoCollection|static|null {
+    ): Collection|static|null {
 
         return static::fromHttp('post', $url, $data, $headers);
     }
@@ -113,10 +113,10 @@ trait DtoConstructorTrait
      * @param  string  $url
      * @param  array|string|null  $data
      * @param  array  $headers
-     * @return \Bfg\Dto\Collections\DtoCollection|Dto|null
+     * @return Collection|Dto|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromHttp(string $method, string $url, array|string|null $data = [], array $headers = []): DtoCollection|static|null
+    public static function fromHttp(string $method, string $url, array|string|null $data = [], array $headers = []): Collection|static|null
     {
         $method = strtolower($method);
         if (! in_array($method, ['get', 'head', 'post', 'put', 'patch', 'delete'])) {
@@ -171,16 +171,18 @@ trait DtoConstructorTrait
      *
      * @param  \Illuminate\Support\Collection|array  $items
      * @param  mixed  ...$other
-     * @return DtoCollection
+     * @return Collection
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromCollection(Collection|array $items, ...$other): DtoCollection
+    public static function fromCollection(Collection|array $items, ...$other): Collection
     {
+        $collectionClass = is_array($items) ? DtoCollection::class : $items::class;
+
         if ($items instanceof Collection) {
             $items = $items->toArray();
         }
 
-        return new DtoCollection(array_filter(array_map(function ($item) use ($other) {
+        return new ($collectionClass)(array_filter(array_map(function ($item) use ($other) {
             return static::fromAnything($item, ...$other);
         }, $items)));
     }
@@ -188,10 +190,10 @@ trait DtoConstructorTrait
     /**
      * @param  mixed  $item
      * @param  mixed  ...$other
-     * @return Dto|DtoCollection|null
+     * @return Dto|Collection|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromAnything(mixed $item = null, ...$other): static|DtoCollection|null
+    public static function fromAnything(mixed $item = null, ...$other): static|Collection|null
     {
         if (is_array($item)) {
             if (is_assoc($item)) {
@@ -283,10 +285,10 @@ trait DtoConstructorTrait
      * Dto constructor from json
      *
      * @param  string|null  $json
-     * @return \Bfg\Dto\Collections\DtoCollection|Dto
+     * @return Collection|Dto
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromJson(string $json = null): DtoCollection|static
+    public static function fromJson(string $json = null): Collection|static
     {
         $start = static::startTime();
         $data = $json ? json_decode($json, true) : [];
@@ -339,10 +341,10 @@ trait DtoConstructorTrait
      * Dto constructor from array
      *
      * @param  array|null  $data
-     * @return \Bfg\Dto\Collections\DtoCollection|\Bfg\Dto\Dto
+     * @return Collection|\Bfg\Dto\Dto
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromArray(array $data = null): DtoCollection|static
+    public static function fromArray(array $data = null): Collection|static
     {
         $start = static::startTime();
 
@@ -428,7 +430,7 @@ trait DtoConstructorTrait
                 if (is_subclass_of($class, Dto::class)) {
                     $value = $class::fromEmpty();
                 } elseif (is_subclass_of($class, Collection::class) || $class === Collection::class) {
-                    $value = new DtoCollection();
+                    $value = new $class();
                 }
             }
 

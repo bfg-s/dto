@@ -8,6 +8,7 @@ use Bfg\Dto\Attributes\DtoFromCache;
 use Bfg\Dto\Attributes\DtoFromConfig;
 use Bfg\Dto\Attributes\DtoFromRequest;
 use Bfg\Dto\Attributes\DtoFromRoute;
+use Bfg\Dto\Attributes\DtoItem;
 use Bfg\Dto\Attributes\DtoName;
 use Bfg\Dto\Collections\DtoCollection;
 use Bfg\Dto\Dto;
@@ -99,7 +100,7 @@ trait DtoSystemTrait
         }
 
         foreach ($arguments as $key => $argument) {
-            $arguments[$key] = static::castAttribute($key, $argument, $arguments);
+            $arguments[$key] = is_null($argument) ? $argument : static::castAttribute($key, $argument, $arguments);
         }
 
         $arguments = static::fireEvent('creating', $arguments, static::SET_CURRENT_DATA);
@@ -119,7 +120,6 @@ trait DtoSystemTrait
         }
 
         static::$__originals[static::class][spl_object_id($dto)] = $data;
-
         return [$dto, $arguments];
     }
 
@@ -129,6 +129,7 @@ trait DtoSystemTrait
      * @param  string  $key
      * @param  array  $types
      * @param  array  $data
+     * @param  \Illuminate\Database\Eloquent\Model|null  $model
      * @return array
      * @throws \Bfg\Dto\Exceptions\DtoModelBindingFailException
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
@@ -166,7 +167,9 @@ trait DtoSystemTrait
                 }
             }
         } else {
-            $value = $data[$nameInData] ?? null;
+            $value = array_key_exists($nameInData, $data)
+                ? $data[$nameInData]
+                : null;
         }
 
         if (! $isNullable && $value === null) {
@@ -223,10 +226,16 @@ trait DtoSystemTrait
         }
 
         if (! $type->isBuiltin() && ! $isOtherParam) {
-            $class = $type->getName();
+            $class = $classCollection = $type->getName();
+
+            $attributes = $parameter->getAttributes(DtoItem::class);
+            if (count($attributes)) {
+                $attribute = $attributes[0]->newInstance();
+                $class = $attribute->className;
+            }
 
             if (is_subclass_of($class, Dto::class)) {
-                $value = static::discoverDtoValue($hasCollection, $hasArray, $nameInData, $class, $data, $parameter->allowsNull(), $model);
+                $value = static::discoverDtoValue($hasCollection, $hasArray, $nameInData, $class, $data, $parameter->allowsNull(), $model, $classCollection);
             } else {
                 if (is_subclass_of($class, Model::class)) {
                     $value = static::discoverModelValue($nameInData, $class, $data, $parameter->allowsNull());
@@ -235,13 +244,13 @@ trait DtoSystemTrait
                 }
             }
         } else {
-            $value = $data[$nameInData]
-                ?? ($parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null);
+            $value = array_key_exists($nameInData, $data)
+                ? $data[$nameInData]
+                : ($parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null);
         }
         $value = static::fireEvent(['created', $name], $value, static::SET_CURRENT_DATA, $data, $parameter);
         $value = static::transformAttribute($name, $value);
-
-        if ($value === null && $parameter->isDefaultValueAvailable()) {
+        if ($value === null && $parameter->isDefaultValueAvailable() && ! $parameter->allowsNull()) {
             $value = $parameter->getDefaultValue();
         }
 
@@ -405,16 +414,18 @@ trait DtoSystemTrait
      * @param  string  $nameInData
      * @param  string  $class
      * @param  array  $data
+     * @param  string|null  $dtoModel
      * @return mixed
      */
     protected static function discoverOtherValue(
         string $nameInData,
         string $class,
         array $data,
+        string|null $dtoModel = null,
     ): mixed {
         if (! is_subclass_of($class, Carbon::class) && $class !== Carbon::class) {
             if (is_subclass_of($class, Collection::class) || $class === Collection::class) {
-                $value = new DtoCollection($data[$nameInData]);
+                $value = new $class($data[$nameInData]);
             } elseif (
                 (is_subclass_of($class, FormRequest::class) || $class === FormRequest::class)
                 || (is_subclass_of($class, Request::class) || $class === Request::class)
@@ -508,7 +519,9 @@ trait DtoSystemTrait
         array $data,
         bool $allowsNull,
         Model $model = null,
+        string|null $classCollection = null,
     ): mixed {
+        $classCollection = $classCollection ?: DtoCollection::class;
 
         $namedData = array_key_exists($nameInData, $data)
             ? $data[$nameInData]
@@ -519,12 +532,12 @@ trait DtoSystemTrait
                 if (static::isSerialize($namedData)) {
                     $value = unserialize($namedData);
                 } elseif (static::isJson($namedData)) {
-                    $value = new DtoCollection(json_decode($namedData, true));
+                    $value = new $classCollection(json_decode($namedData, true));
                 }
             } else {
                 $value = $allowsNull && ! $namedData
                     ? null
-                    : new DtoCollection();
+                    : new $classCollection();
                 if ($value && $namedData) {
                     foreach ($namedData as $item) {
                         $value->push($class::fromAnything($item));
@@ -542,7 +555,7 @@ trait DtoSystemTrait
                 : null;
         }
 
-        return $value;
+        return $value ?? null;
     }
 
     /**
