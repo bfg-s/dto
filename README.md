@@ -25,6 +25,8 @@ php artisan make:dto UserDto
     * [fromEmpty](#fromempty)
     * [fromArray](#fromarray)
     * [fromAnything](#fromanything)
+    * fromDto
+    * fromUrl
     * [fromGet](#fromget)
     * [fromPost](#frompost)
     * [fromHttp](#fromhttp)
@@ -519,6 +521,8 @@ class UserDto extends Dto
     ];
 }
 ```
+> And the cherry on the cake... Now you can use the Dto class as a cast class for a model with a JSON or link field.
+> Keep in mind that if the array is associative, it will return the Dto class, but if not, it will return a collection.
 
 ### Property hidden
 You can use property hidden like in Laravel models.
