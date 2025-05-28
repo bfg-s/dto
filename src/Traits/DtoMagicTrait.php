@@ -14,11 +14,11 @@ use Illuminate\Support\Str;
 
 trait DtoMagicTrait
 {
-    public function __call(string $name, array $arguments)
+    public function __call(string $method, array $parameters)
     {
         if ($model = $this->model()) {
 
-            return $model->{$name}(...$arguments);
+            return $model->{$method}(...$parameters);
         }
 
         return null;

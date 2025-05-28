@@ -25,6 +25,7 @@ use Bfg\Dto\Traits\DtoToModelTrait;
 use Bfg\Dto\Traits\DtoToResponseTrait;
 use Bfg\Dto\Traits\DtoToSerializeTrait;
 use Bfg\Dto\Traits\DtoToStringTrait;
+use Illuminate\Contracts\Database\Eloquent\Castable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Traits\Conditionable;
@@ -53,7 +54,7 @@ use Illuminate\Support\Traits\Tappable;
  * @property string $dateFormat    The storage format for date columns.
  * @property bool   $logsEnabled   Indicates if logging is enabled for this DTO.
  */
-abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess
+abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Castable
 {
     use DtoSystemVariablesTrait;
     use DtoConstructorTrait;
@@ -155,18 +156,26 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess
     protected static bool $postDefault = false;
 
     /**
+     * The source for casting.
+     * If Set this source, you dto will be converted to this string.
+     *
+     * @var string|null
+     */
+    protected static string|null $source = null;
+
+    /**
      * Handle dynamic method calls.
      *
-     * @param string $name
-     * @param array $arguments
+     * @param string $method
+     * @param array $parameters
      * @return mixed
      */
-    public function __call($name, $arguments)
+    public function __call($method, $parameters)
     {
-        if (static::hasMacro($name)) {
-            return $this->macroCall($name, $arguments);
+        if (static::hasMacro($method)) {
+            return $this->macroCall($method, $parameters);
         }
 
-        return $this->magicCall($name, $arguments);
+        return $this->magicCall($method, $parameters);
     }
 }
