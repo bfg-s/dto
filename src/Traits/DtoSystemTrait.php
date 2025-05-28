@@ -95,7 +95,8 @@ trait DtoSystemTrait
             $data = $validator->validated();
         }
         $created = [];
-        foreach (static::getConstructorParameters() as $parameter) {
+        $constructorParameters = static::getConstructorParameters();
+        foreach ($constructorParameters as $parameter) {
 
             [$name, $value] = static::createNameValueFromProperty($parameter, $data, $model);
 
@@ -152,6 +153,12 @@ trait DtoSystemTrait
         $argumentsToInstance = array_diff_key($arguments, array_flip($extendedKeys));
 
         $dto = new static(...$argumentsToInstance);
+
+        if (! $argumentsToInstance && $data && ! count($constructorParameters)) {
+            foreach ($data as $key => $value) {
+                $dto->{$key} = $value;
+            }
+        }
 
         static::$__parameters[static::class][spl_object_id($dto)]
             = array_intersect_key($arguments, array_flip($extendedKeys));
