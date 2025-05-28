@@ -158,6 +158,18 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Cas
     protected static bool $postDefault = false;
 
     /**
+     * Allow dynamic properties.
+     *
+     * This property is used to control whether dynamic properties
+     * are allowed on the DTO instances.
+     *
+     * If DTO constructors don't have properties, this is allowed automatically.
+     *
+     * @var bool
+     */
+    protected static bool $allowDynamicProperties = false;
+
+    /**
      * The source for casting.
      * If Set this source, you dto will be converted to this string.
      *

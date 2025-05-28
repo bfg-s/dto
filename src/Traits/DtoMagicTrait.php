@@ -30,6 +30,7 @@ trait DtoMagicTrait
      * @param $name
      * @param $value
      * @return void
+     * @throws \Bfg\Dto\Exceptions\DtoPropertyAreImmutableException
      */
     public function __set($name, $value)
     {
@@ -38,7 +39,11 @@ trait DtoMagicTrait
             $this->set($name, $value);
         }
 
-        $this->{$name} = $value;
+        if (static::$allowDynamicProperties || ! count(static::getConstructorParameters())) {
+            $this->{$name} = $value;
+        } else {
+            throw new DtoPropertyAreImmutableException();
+        }
     }
 
     /**

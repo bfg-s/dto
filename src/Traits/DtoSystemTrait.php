@@ -154,7 +154,7 @@ trait DtoSystemTrait
 
         $dto = new static(...$argumentsToInstance);
 
-        if (! $argumentsToInstance && $data && ! count($constructorParameters)) {
+        if ((static::$allowDynamicProperties || ! count($constructorParameters)) && $data) {
             foreach ($data as $key => $value) {
                 $dto->{$key} = $value;
             }
