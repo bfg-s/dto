@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bfg\Dto;
 
+use AllowDynamicProperties;
 use ArrayAccess;
 use Bfg\Dto\Interfaces\DtoContract;
 use Bfg\Dto\Traits\DtoCastingTrait;
@@ -54,6 +55,7 @@ use Illuminate\Support\Traits\Tappable;
  * @property string $dateFormat    The storage format for date columns.
  * @property bool   $logsEnabled   Indicates if logging is enabled for this DTO.
  */
+#[AllowDynamicProperties]
 abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Castable
 {
     use DtoSystemVariablesTrait;

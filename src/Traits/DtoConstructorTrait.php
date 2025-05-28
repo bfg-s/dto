@@ -296,9 +296,10 @@ trait DtoConstructorTrait
      * Dto constructor from serialize
      *
      * @param  string|null  $serialize
-     * @return Dto
+     * @return static|\Illuminate\Support\Collection|null
+     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromSerialize(string $serialize = null): static
+    public static function fromSerialize(string $serialize = null): static|Collection|null
     {
         $start = static::startTime();
         $serialize = static::fireEvent('prepareSerialize', $serialize, static::SET_CURRENT_DATA);
@@ -306,8 +307,9 @@ trait DtoConstructorTrait
         static::fireEvent('fromSerialize', [], $dto);
         if ($dto instanceof Dto) {
             $dto->log('createdFromSerialize', ms: static::endTime($start));
+            return $dto;
         }
-        return $dto;
+        return static::fromAnything($dto);
     }
 
     /**
