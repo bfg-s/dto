@@ -14,6 +14,6 @@ trait DtoToJsonTrait
      */
     public function toJson($options = 0): string
     {
-        return json_encode($this->toArray(), $options|JSON_UNESCAPED_UNICODE);
+        return json_encode($this->toArray(), $options);
     }
 }

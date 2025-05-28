@@ -18,7 +18,6 @@ use Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException;
 use Bfg\Dto\Exceptions\DtoValidationException;
 use Carbon\Carbon;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
-use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Client\PendingRequest;
@@ -63,11 +62,12 @@ trait DtoSystemTrait
 
             public function set($model, $key, $value, $attributes): array
             {
-                if (is_subclass_of($value, Dto::class)) {
-                    return [$key => $this->source ?: $value->toJson()];
+                if ($value instanceof Dto::class || $value instanceof Collection::class) {
+                    return [$key => $this->source ?: $value->toJson(JSON_UNESCAPED_UNICODE)];
                 } elseif (is_string($value)) {
                     return [$key => $value];
                 }
+                return [$key => $value];
             }
         };
     }
@@ -156,7 +156,9 @@ trait DtoSystemTrait
 
         if ((static::$allowDynamicProperties || ! count($constructorParameters)) && $data) {
             foreach ($data as $key => $value) {
-                $dto->{$key} = $value;
+                if (! array_key_exists($key, $argumentsToInstance) && ! in_array($key, $extendedKeys)) {
+                    $dto->{$key} = $value;
+                }
             }
         }
 
