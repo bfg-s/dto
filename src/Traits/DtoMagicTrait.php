@@ -29,8 +29,7 @@ trait DtoMagicTrait
      *
      * @param $name
      * @param $value
-     * @return mixed
-     * @throws \Bfg\Dto\Exceptions\DtoPropertyAreImmutableException
+     * @return void
      */
     public function __set($name, $value)
     {
@@ -39,7 +38,7 @@ trait DtoMagicTrait
             $this->set($name, $value);
         }
 
-        throw new DtoPropertyAreImmutableException();
+        $this->{$name} = $value;
     }
 
     /**
