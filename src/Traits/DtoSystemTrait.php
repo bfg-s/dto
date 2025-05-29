@@ -64,7 +64,7 @@ trait DtoSystemTrait
 
             public function set($model, $key, $value, $attributes): array
             {
-                if ($value instanceof Dto::class || $value instanceof Collection::class) {
+                if ($value instanceof Dto || $value instanceof Collection) {
                     return [$key => $this->source ?: $value->toJson(JSON_UNESCAPED_UNICODE)];
                 } elseif (is_string($value)) {
                     return [$key => $value];
