@@ -57,6 +57,8 @@ trait DtoSystemTrait
                     return null;
                 }
 
+                $this->class = $this->class::discoverCastedDto($model, $key, $value, $attributes);
+
                 return $this->class::fromAnything(tag_replace($attributes[$key], $model));
             }
 
@@ -760,5 +762,19 @@ trait DtoSystemTrait
     protected static function httpData(array|string|null $data): array|string|null
     {
         return $data;
+    }
+
+    /**
+     * Discover the class name of the casted DTO.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @param  string  $key
+     * @param  mixed  $value
+     * @param  array  $attributes
+     * @return class-string<Dto>
+     */
+    public static function discoverCastedDto(Model $model, string $key, mixed $value, array $attributes): string
+    {
+        return static::class;
     }
 }
