@@ -3,7 +3,7 @@
 namespace Bfg\Dto\Collections;
 
 use Bfg\Dto\Traits\DtoCollectionMethodsTrait;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Collection as BaseCollection;
 
 /**
  * @template TKey of array-key
@@ -13,7 +13,7 @@ use Illuminate\Support\Collection;
  * @implements \ArrayAccess<TKey, TValue>
  * @implements \Illuminate\Support\Enumerable<TKey, TValue>
  */
-class DtoCollection extends Collection
+class DtoCollection extends BaseCollection
 {
     use DtoCollectionMethodsTrait;
 

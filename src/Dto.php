@@ -21,11 +21,14 @@ use Bfg\Dto\Traits\DtoToApiTrait;
 use Bfg\Dto\Traits\DtoToArrayTrait;
 use Bfg\Dto\Traits\DtoToBase64Trait;
 use Bfg\Dto\Traits\DtoToCollectionTrait;
+use Bfg\Dto\Traits\DtoToFluentTrait;
+use Bfg\Dto\Traits\DtoToImportTrait;
 use Bfg\Dto\Traits\DtoToJsonTrait;
 use Bfg\Dto\Traits\DtoToModelTrait;
 use Bfg\Dto\Traits\DtoToResponseTrait;
 use Bfg\Dto\Traits\DtoToSerializeTrait;
 use Bfg\Dto\Traits\DtoToStringTrait;
+use Bfg\Dto\Traits\DtoToUrlTrait;
 use Illuminate\Contracts\Database\Eloquent\Castable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
@@ -76,9 +79,12 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Cas
     use DtoToResponseTrait;
     use DtoToBase64Trait;
     use DtoToStringTrait;
+    use DtoToImportTrait;
+    use DtoToFluentTrait;
     use DtoToArrayTrait;
     use DtoToModelTrait;
     use DtoToJsonTrait;
+    use DtoToUrlTrait;
     use DtoToApiTrait;
 
     use Conditionable;

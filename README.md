@@ -25,8 +25,9 @@ php artisan make:dto UserDto
     * [fromEmpty](#fromempty)
     * [fromArray](#fromarray)
     * [fromAnything](#fromanything)
-    * fromDto
-    * fromUrl
+    * [fromDto](#fromdto)
+    * [fromFluent](#fromfluent)
+    * [fromUrl](#fromurl)
     * [fromGet](#fromget)
     * [fromPost](#frompost)
     * [fromHttp](#fromhttp)
@@ -99,6 +100,9 @@ php artisan make:dto UserDto
     * [ToModel](#tomodel)
     * [ToSerialize](#toserialize)
     * [ToString](#tostring)
+    * [ToFluent](#tofluent)
+    * [ToImport](#toimport)
+    * [ToUrl](#tourl)
 * [DTO Collection](#dto-collection)
     * [insertToDatabase](#inserttodatabase)
     * [insertToModel](#inserttomodel)
@@ -201,6 +205,36 @@ $dto = UserDto::fromAnything(\Illuminate\Foundation\Http\FormRequest::class);
 $dto = UserDto::fromAnything('{"name":"John Doe","email":"test@gmail.com"}');
 $dto = UserDto::fromAnything('C:8:"UserDto":23:{a:2:{s:4:"name";s:8:"John Doe";s:5:"email";s:13:"test@gmail.com";}}');
 $dto = UserDto::fromAnything(User::find(1));
+```
+
+#### fromDto
+You can create a new DTO from another DTO.
+```php
+$firstDto = UserDto::fromArray([
+    'name' => 'John Doe',
+    'email' => 'test@gmail.com',
+]);
+
+$secondDto = UserDto::fromDto($firstDto); 
+// Creates a new DTO with the same properties as the first DTO
+```
+
+#### fromFluent
+You can create a new DTO from a fluent object.
+```php
+$fluent = (new \Illuminate\Support\Fluent([
+    'name' => 'John Doe',
+    'email' => 'test@gmail.com',
+]))->set('password', '123456');
+
+$dto = UserDto::fromFluent($fluent);
+```
+
+#### fromUrl
+You can create a new DTO from the URL.
+```php
+UserDto::fromUrl(string $url, array|string|null $query = null, array $headers = []);
+UserDto::fromUrl('https://test.dev');
 ```
 
 #### fromGet
@@ -878,6 +912,7 @@ $dto->unsetMeta('key');
 You can use attributes.
 #### DtoItem
 You can set `DTO` for `Collection` property
+
 ```php
 class UserDto extends Dto
 {            
@@ -1376,6 +1411,60 @@ $dto->toString();
 echo (string) $dto;
 ```
 
+#### ToFluent
+You can convert DTO to fluent.
+```php
+$dto->toFluent();
+```
+
+#### ToImport
+You can convert DTO to import.
+> Convert an object to the format string from which the object was created.
+> Used for storing in a database.
+> `json` by default.
+```php
+$dto->toImport(string $fileName, string $sheetName = 'Sheet1', array $options = []);
+```
+
+#### ToUrl
+You can convert DTO to url.
+```php
+$dto->toUrl(string|null $baseUrl = null, array $exclude = [], array $only = [], array $query = []): string;
+
+$dto = UserDto::fromArray([
+    'name' => 'John Doe',
+    'email' => 'test@gmail.com',
+]);
+// Generate only url parameters
+echo $dto->toUrl();
+// ?name=John%20Doe&email=test%40gmail.com
+
+// Or generate parameters with base url
+echo $dto->toUrl('https://example.com');
+// https://example.com?name=John%20Doe&email=test%40gmail.com  
+
+// Or generate parameters with base url but without email property
+echo $dto->toUrl('https://example.com', exclude: ['email']); 
+// https://example.com?name=John%20Doe
+
+// Or generate parameters with base url use only email property
+echo $dto->toUrl('https://example.com', only: ['email']);
+// https://example.com?email=test%40gmail.com
+
+// Or generate parameters with base url and additional query parameters
+echo $dto->toUrl('https://example.com', query: ['page' => 1]);
+// https://example.com?name=John%20Doe&email=test%40gmail.com&page=1
+
+// And you can use parameters like tags in the base url
+echo $dto->toUrl('https://example.com/find/{name}/name');
+// https://example.com/find/John%20Doe/name?email=test%40gmail.com
+
+// And you can convert DTO to the route.
+// For example, you can have a route named 'user.profile'.
+// You can use the `toUrl` method to generate a URL for that route.
+echo $dto->toUrl('user.profile');
+// This will generate a URL like: https://example.com/user/profile?name=John%20Doe&email=test%40gmail.com
+```
 
 ### DTO Collection
 Dto collection have couple additional methods.

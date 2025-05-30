@@ -13,8 +13,9 @@ use Bfg\Dto\Exceptions\DtoUndefinedCacheException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Fluent;
 use Illuminate\Support\Str;
 
 trait DtoConstructorTrait
@@ -22,12 +23,12 @@ trait DtoConstructorTrait
     /**
      * @param  string  $sourceName
      * @param ...$arguments
-     * @return Collection|\Bfg\Dto\Dto|null
+     * @return DtoCollection|\Bfg\Dto\Dto|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromSource(string $sourceName, ...$arguments): static|Collection|null
+    public static function fromSource(string $sourceName, ...$arguments): static|DtoCollection|null
     {
-        $method = 'source' . ucfirst(Str::camel($sourceName));
+        $method = 'source'.ucfirst(Str::camel($sourceName));
 
         if (method_exists(static::class, $method)) {
             return static::fromAnything(static::$method(...$arguments));
@@ -48,7 +49,7 @@ trait DtoConstructorTrait
 
         $format = pathinfo($filePath, PATHINFO_EXTENSION);
 
-        if (! in_array($format, ['json', 'csv'])) {
+        if (!in_array($format, ['json', 'csv'])) {
             throw new \InvalidArgumentException("Unsupported format: {$format}");
         }
 
@@ -84,30 +85,33 @@ trait DtoConstructorTrait
      * @return \Bfg\Dto\Dto|\Illuminate\Support\Collection|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromUrl(string $url, ...$other): Dto|Collection|null
+    public static function fromUrl(string $url, ...$other): Dto|DtoCollection|null
     {
         if (filter_var($url, FILTER_VALIDATE_URL) !== false) {
             if (static::$postDefault) {
-                return static::fromPost($url, ...$other);
+                $return = static::fromPost($url, ...$other);
+            } else {
+                $return = static::fromGet($url, ...$other);
             }
-            return static::fromGet($url, ...$other);
+        } else {
+            $return = static::fromEmpty();
         }
-        return static::fromEmpty();
+        call_user_func([$return, 'setImportType'], 'url', compact('url'));
+        return $return;
     }
 
     /**
      * @param  string  $url
      * @param  array|string|null  $query
      * @param  array  $headers
-     * @return Collection|static|null
+     * @return DtoCollection|static|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromGet(
         string $url,
         array|string|null $query = null,
         array $headers = []
-    ): Collection|static|null {
-
+    ): DtoCollection|static|null {
         return static::fromHttp('get', $url, $query, $headers);
     }
 
@@ -115,15 +119,14 @@ trait DtoConstructorTrait
      * @param  string  $url
      * @param  array  $data
      * @param  array  $headers
-     * @return Collection|static|null
+     * @return DtoCollection|static|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromPost(
         string $url,
         array $data = [],
         array $headers = []
-    ): Collection|static|null {
-
+    ): DtoCollection|static|null {
         return static::fromHttp('post', $url, $data, $headers);
     }
 
@@ -132,13 +135,18 @@ trait DtoConstructorTrait
      * @param  string  $url
      * @param  array|string|null  $data
      * @param  array  $headers
-     * @return Collection|Dto|null
+     * @return DtoCollection|Dto|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromHttp(string $method, string $url, array|string|null $data = [], array $headers = []): Collection|static|null
-    {
+    public static function fromHttp(
+        string $method,
+        string $url,
+        array|string|null $data = [],
+        array $headers = []
+    ): DtoCollection|static|null {
+        static::$source = $url;
         $method = strtolower($method);
-        if (! in_array($method, ['get', 'head', 'post', 'put', 'patch', 'delete'])) {
+        if (!in_array($method, ['get', 'head', 'post', 'put', 'patch', 'delete'])) {
             $method = 'get';
         }
         $response = static::httpClient()
@@ -173,11 +181,9 @@ trait DtoConstructorTrait
         }
 
         if ($callback) {
-
             $result = call_user_func($callback);
 
             if ($result instanceof static) {
-
                 return $result->cache();
             }
         }
@@ -190,29 +196,30 @@ trait DtoConstructorTrait
      *
      * @param  \Illuminate\Support\Collection|array  $items
      * @param  mixed  ...$other
-     * @return Collection
+     * @return DtoCollection
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromCollection(Collection|array $items, ...$other): Collection
+    public static function fromCollection(DtoCollection|array $items, ...$other): DtoCollection
     {
-        $collectionClass = is_array($items) ? DtoCollection::class : $items::class;
-
-        if ($items instanceof Collection) {
+        if ($items instanceof SupportCollection) {
             $items = $items->toArray();
         }
 
-        return new ($collectionClass)(array_filter(array_map(function ($item) use ($other) {
+        return (new DtoCollection(array_filter(array_map(function ($item) use ($other) {
             return static::fromAnything($item, ...$other);
-        }, $items)));
+        }, $items))))->setRoot(static::class);
     }
 
     /**
+     * Make instance from anything
+     *
      * @param  mixed  $item
      * @param  mixed  ...$other
-     * @return Dto|Collection|null
+     * @return Dto|DtoCollection|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
+     * @alias fromAny
      */
-    public static function fromAnything(mixed $item = null, ...$other): static|Collection|null
+    public static function fromAnything(mixed $item = null, ...$other): static|DtoCollection|null
     {
         if (is_array($item)) {
             return static::fromArray($item);
@@ -236,10 +243,26 @@ trait DtoConstructorTrait
             return static::fromRequest($item);
         } elseif ($item instanceof Dto) {
             return static::fromDto($item);
-        } elseif ($item instanceof Collection) {
+        } elseif ($item instanceof DtoCollection) {
             return static::fromCollection($item);
+        } elseif ($item instanceof Fluent) {
+            return static::fromFluent($item);
         }
         return static::fromEmpty();
+    }
+
+    /**
+     * Make instance from any type
+     *
+     * @param  mixed|null  $item
+     * @param ...$other
+     * @return \Bfg\Dto\Collections\DtoCollection|static|null
+     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
+     * @alias fromAnything
+     */
+    public static function fromAny(mixed $item = null, ...$other): static|DtoCollection|null
+    {
+        return static::fromAnything($item, ...$other);
     }
 
     /**
@@ -249,12 +272,24 @@ trait DtoConstructorTrait
      * @return \Bfg\Dto\Dto|\Illuminate\Support\Collection
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromDto(Dto|string $dto): Dto|Collection
+    public static function fromDto(Dto|string $dto): Dto|DtoCollection
     {
         if (is_string($dto)) {
             $dto = app($dto);
         }
         return static::fromArray($dto->toArray());
+    }
+
+    /**
+     * Make instance from Fluent
+     *
+     * @param  \Illuminate\Support\Fluent  $fluent
+     * @return \Bfg\Dto\Dto|\Illuminate\Support\Collection
+     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
+     */
+    public static function fromFluent(Fluent $fluent): Dto|DtoCollection
+    {
+        return static::fromArray($fluent->toArray());
     }
 
     /**
@@ -299,7 +334,7 @@ trait DtoConstructorTrait
      * @return static|\Illuminate\Support\Collection|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromSerialize(string $serialize = null): static|Collection|null
+    public static function fromSerialize(string $serialize = null): static|DtoCollection|null
     {
         $start = static::startTime();
         $serialize = static::fireEvent('prepareSerialize', $serialize, static::SET_CURRENT_DATA);
@@ -307,31 +342,38 @@ trait DtoConstructorTrait
         static::fireEvent('fromSerialize', [], $dto);
         if ($dto instanceof Dto) {
             $dto->log('createdFromSerialize', ms: static::endTime($start));
-            return $dto;
+            $return = $dto;
+            call_user_func([$return, 'setImportType'], 'serializeDto', compact('serialize'));
+        } else {
+            $return = static::fromAnything($dto);
+            call_user_func([$return, 'setImportType'], 'serializeAny', compact('serialize'));
         }
-        return static::fromAnything($dto);
+        return $return;
     }
 
     /**
      * Dto constructor from json
      *
      * @param  string|null  $json
-     * @return Collection|Dto
+     * @return DtoCollection|Dto
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromJson(string $json = null): Collection|static
+    public static function fromJson(string $json = null): DtoCollection|static
     {
         $start = static::startTime();
         $data = $json ? json_decode($json, true) : [];
-        if (! is_assoc($data)) {
-            return static::fromCollection($data);
+        if (!is_assoc($data)) {
+            $return = static::fromCollection($data);
+        } else {
+            $data = static::fireEvent('prepareJson', $data, static::SET_CURRENT_DATA);
+            [$dto, $arguments] = static::makeInstanceFromArray($data);
+            static::fireEvent('created', [], $dto, $arguments);
+            static::fireEvent('fromJson', [], $dto, $arguments);
+            $dto->log('createdFromJson', [], ms: static::endTime($start));
+            $return = $dto;
         }
-        $data = static::fireEvent('prepareJson', $data, static::SET_CURRENT_DATA);
-        [$dto, $arguments] = static::makeInstanceFromArray($data);
-        static::fireEvent('created', [], $dto, $arguments);
-        static::fireEvent('fromJson', [], $dto, $arguments);
-        $dto->log('createdFromJson', [], ms: static::endTime($start));
-        return $dto;
+        call_user_func([$return, 'setImportType'], 'json', compact('json'));
+        return $return;
     }
 
     /**
@@ -345,7 +387,6 @@ trait DtoConstructorTrait
         $start = static::startTime();
 
         if (is_string($request)) {
-
             $request = app($request);
         }
 
@@ -372,20 +413,18 @@ trait DtoConstructorTrait
      * Dto constructor from array
      *
      * @param  array|null  $data
-     * @return Collection|\Bfg\Dto\Dto
+     * @return DtoCollection|\Bfg\Dto\Dto
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromArray(array $data = null): Collection|static
+    public static function fromArray(array $data = null): DtoCollection|static
     {
         $start = static::startTime();
 
-        if (! $data) {
-
+        if (!$data) {
             return static::fromEmpty();
         }
 
-        if (! is_assoc($data)) {
-
+        if (!is_assoc($data)) {
             return static::fromCollection($data);
         }
 
@@ -426,9 +465,9 @@ trait DtoConstructorTrait
                     if ($unionType->getName() === 'array') {
                         $type = $unionType;
                         break;
-                    } elseif (! $unionType->isBuiltin()) {
+                    } elseif (!$unionType->isBuiltin()) {
                         $class = $unionType->getName();
-                        if (is_subclass_of($class, Collection::class) || $class === Collection::class) {
+                        if (is_subclass_of($class, DtoCollection::class) || $class === DtoCollection::class) {
                             $type = $unionType;
                             break;
                         }
@@ -449,24 +488,24 @@ trait DtoConstructorTrait
             $data = [
                 $name => $parameter->isDefaultValueAvailable()
                     ? $parameter->getDefaultValue()
-                    : (! $type->allowsNull()
+                    : (!$type->allowsNull()
                         ? static::makeValueByType($type->getName(), $types)
                         : null)
             ];
 
             [$name, $value] = static::createNameValueFromProperty($parameter, $data);
 
-            if (! $value && ! $type->isBuiltin()) {
+            if (!$value && !$type->isBuiltin()) {
                 $class = $type->getName();
                 if (is_subclass_of($class, Dto::class)) {
                     $value = $class::fromEmpty();
-                } elseif (is_subclass_of($class, Collection::class) || $class === Collection::class) {
+                } elseif (is_subclass_of($class, DtoCollection::class) || $class === DtoCollection::class) {
                     $value = new $class();
                 }
             }
 
             if ($value === null) {
-                $methodByDefault = 'default' . ucfirst(Str::camel($name));
+                $methodByDefault = 'default'.ucfirst(Str::camel($name));
                 if (method_exists(static::class, $methodByDefault)) {
                     $value = static::$methodByDefault();
                 }
@@ -487,7 +526,7 @@ trait DtoConstructorTrait
             ]);
 
             if ($value === null) {
-                $methodByDefault = 'default' . ucfirst(Str::camel($key));
+                $methodByDefault = 'default'.ucfirst(Str::camel($key));
                 if (method_exists(static::class, $methodByDefault)) {
                     $value = static::$methodByDefault();
                 }

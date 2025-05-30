@@ -13,6 +13,9 @@ trait DtoToStringTrait
      */
     public function toString(): string
     {
-        return $this->__toString();
+        $start = static::startTime();
+        $result = $this->toJson();
+        $this->log('ConvertedToString', ms: static::endTime($start));
+        return $result;
     }
 }

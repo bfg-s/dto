@@ -178,4 +178,9 @@ trait DtoSystemVariablesTrait
      * @var array
      */
     protected static array $__settings = [];
+
+    /**
+     * @var array
+     */
+    protected static array $__importType = [];
 }

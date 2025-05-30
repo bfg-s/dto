@@ -3,7 +3,7 @@
 namespace Bfg\Dto\Collections;
 
 use Bfg\Dto\Traits\DtoCollectionMethodsTrait;
-use Illuminate\Support\LazyCollection;
+use Illuminate\Support\LazyCollection as BaseLazyCollection;
 
 /**
  * @template TKey of array-key
@@ -12,7 +12,7 @@ use Illuminate\Support\LazyCollection;
  *
  * @implements \Illuminate\Support\Enumerable<TKey, TValue>
  */
-class LazyDtoCollection extends LazyCollection
+class LazyDtoCollection extends BaseLazyCollection
 {
     use DtoCollectionMethodsTrait;
 }

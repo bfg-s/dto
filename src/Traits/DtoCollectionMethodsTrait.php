@@ -10,6 +10,96 @@ trait DtoCollectionMethodsTrait
     protected array $meta = [];
 
     /**
+     * @var array
+     */
+    protected static array $__importType = [];
+
+    /**
+     * @var array
+     */
+    protected static array $__roots = [];
+
+    /**
+     * Set import type for the DTO
+     *
+     * @param  string  $type
+     * @param  array  $options
+     * @return void
+     */
+    public function setImportType(string $type, array $options = []): void
+    {
+        static::$__importType[static::class][spl_object_id($this)] = compact('type', 'options');
+    }
+
+    /**
+     * Get an import type for the DTO
+     *
+     * @return array|null
+     */
+    public function getImportType(): array|null
+    {
+        return static::$__importType[static::class][spl_object_id($this)] ?? null;
+    }
+
+    /**
+     * Convert an object to the format string from which the object was created.
+     * Used for storing in a database.
+     *
+     * @return string|null
+     */
+    public function toImport(): string|null
+    {
+        $importType = $this->getImportType();
+        $type = data_get($importType, 'type');
+        if ($type === 'url') {
+            return data_get($importType, 'options.url');
+        } else if ($type === 'serializeDto') {
+            return $this->map->toSerialize()->toJson(JSON_UNESCAPED_UNICODE);
+        } else if ($type === 'serializeAny') {
+            return serialize($this->toArray());
+        } else {
+            return $this->toJson(JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    public function setRoot(string $class): static
+    {
+        static::$__roots[static::class][spl_object_id($this)] = $class;
+        static::$__roots[static::class]['last'] = $class;
+        return $this;
+    }
+
+    /**
+     * @return class-string<Dto>|null
+     */
+    public function getRoot(): ?string
+    {
+        return static::$__roots[static::class][spl_object_id($this)] ?? (
+            $this->first()
+                ? get_class($this->first())
+                : (static::$__roots[static::class]['last'] ?? null)
+        );
+    }
+
+    /**
+     * @param $item
+     * @return $this
+     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
+     */
+    public function add($item): static
+    {
+        if (! ($item instanceof Dto)) {
+            if ($root = $this->getRoot()) {
+                $item = $root::fromAnything($item);
+            } else {
+                throw new \BadMethodCallException('You can add only dto objects or supported formats with set root.');
+            }
+        }
+        $this->items[] = $item;
+        return $this;
+    }
+
+    /**
      * Save all items to the database.
      *
      * @param  string  $table

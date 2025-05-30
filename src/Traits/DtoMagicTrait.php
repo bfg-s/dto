@@ -136,10 +136,7 @@ trait DtoMagicTrait
      */
     public function __toString(): string
     {
-        $start = static::startTime();
-        $result = $this->toJson();
-        $this->log('ConvertedToString', ms: static::endTime($start));
-        return $result;
+        return $this->toString();
     }
 
     /**

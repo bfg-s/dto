@@ -22,7 +22,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
@@ -59,19 +58,47 @@ trait DtoSystemTrait
 
                 $this->class = $this->class::discoverCastedDto($model, $key, $value, $attributes);
 
-                return $this->class::fromAnything(tag_replace($attributes[$key], $model));
+                return $this->class::fromAnything(dto_string_replace($attributes[$key], $model));
             }
 
             public function set($model, $key, $value, $attributes): array
             {
-                if ($value instanceof Dto || $value instanceof Collection) {
-                    return [$key => $this->source ?: $value->toJson(JSON_UNESCAPED_UNICODE)];
+                if ($value instanceof Dto || $value instanceof DtoCollection) {
+                    return [$key => $this->source ?: (method_exists($value, 'toImport')
+                        ? $value->toImport()
+                        : $value->toJson(JSON_UNESCAPED_UNICODE)
+                    )];
                 } elseif (is_string($value)) {
                     return [$key => $value];
                 }
                 return [$key => $value];
             }
         };
+    }
+
+    /**
+     * Set import type for the DTO
+     *
+     * @param  string  $type
+     * @param  array  $options
+     * @return void
+     */
+    public static function setImportType(string $type, array $options = []): void
+    {
+        static::$__importType[static::class] = compact('type', 'options');
+    }
+
+    /**
+     * Get an import type for the DTO
+     *
+     * @return array
+     */
+    public static function getImportType(): array
+    {
+        return static::$__importType[static::class] ?? [
+            'type' => 'json',
+            'options' => [],
+        ];
     }
 
     /**
@@ -195,7 +222,7 @@ trait DtoSystemTrait
         }
         $isBuiltin = in_array($type, ['string', 'int', 'float', 'bool', 'array', 'object', 'null', 'mixed', 'callable', 'iterable', 'false', 'true', 'resource']);
         $isNullable = in_array('null', $types);
-        $hasCollection = in_array(Collection::class, $types);
+        $hasCollection = in_array(DtoCollection::class, $types);
         $hasArray = in_array('array', $types);
 
 
@@ -327,7 +354,7 @@ trait DtoSystemTrait
                         $type = $unionType;
                         continue;
                     }
-                    if (is_subclass_of($class, Collection::class) || $class === Collection::class) {
+                    if (is_subclass_of($class, DtoCollection::class) || $class === DtoCollection::class) {
                         $hasCollection = true;
                     }
                 } else {
@@ -347,7 +374,7 @@ trait DtoSystemTrait
 
         if ($type instanceof \ReflectionNamedType) {
             $class = $type->getName();
-            if (is_subclass_of($class, Collection::class) || $class === Collection::class) {
+            if (is_subclass_of($class, DtoCollection::class) || $class === DtoCollection::class) {
                 $hasCollection = true;
             } elseif ($class === 'array') {
                 $hasArray = true;
@@ -486,7 +513,7 @@ trait DtoSystemTrait
         string|null $dtoModel = null,
     ): mixed {
         if (! is_subclass_of($class, Carbon::class) && $class !== Carbon::class) {
-            if (is_subclass_of($class, Collection::class) || $class === Collection::class) {
+            if (is_subclass_of($class, DtoCollection::class) || $class === DtoCollection::class) {
                 $value = new $class($data[$nameInData]);
             } elseif (
                 (is_subclass_of($class, FormRequest::class) || $class === FormRequest::class)
@@ -584,7 +611,7 @@ trait DtoSystemTrait
         Model $model = null,
         string|null $classCollection = null,
     ): mixed {
-        $classCollection = is_subclass_of($classCollection, Collection::class)
+        $classCollection = is_subclass_of($classCollection, DtoCollection::class) || $class === DtoCollection::class
             ? $classCollection
             : DtoCollection::class;
 
@@ -616,7 +643,7 @@ trait DtoSystemTrait
             }
         } else {
             $value = $namedData
-                ? ($namedData instanceof Collection ? $class::fromAnything($namedData->first()) : $class::fromAnything($namedData))
+                ? ($namedData instanceof DtoCollection ? $class::fromAnything($namedData->first()) : $class::fromAnything($namedData))
                 : null;
         }
 

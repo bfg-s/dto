@@ -10,7 +10,6 @@ use Bfg\Dto\Default\LogsInnerDto;
 use Bfg\Dto\Dto;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pipeline\Pipeline;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
@@ -642,7 +641,7 @@ trait DtoHelpersTrait
     {
         $val = $this->get($key);
 
-        if ($val instanceof Collection) {
+        if ($val instanceof DtoCollection) {
             return $val->isEmpty();
         }
 
@@ -910,7 +909,7 @@ trait DtoHelpersTrait
     {
         $value = $this->get($key);
 
-        if ($value && !is_array($value) && !$value instanceof Collection) {
+        if ($value && !is_array($value) && !$value instanceof DtoCollection) {
             return false;
         }
 
