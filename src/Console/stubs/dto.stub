@@ -2,11 +2,11 @@
 
 namespace {{ dtoNamespace }};
 
-use Bfg\Dto\Dto;
+use Bfg\Dto\Dto;{{ uses }}
 
 class {{ dto }}Dto extends Dto
 {
     public function __construct(
-        //
+{{ fields }}
     ) {}
 }
