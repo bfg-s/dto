@@ -163,7 +163,7 @@ class MakeDtoCommand extends GeneratorCommand
      */
     protected function getPath($name): string
     {
-        $name = (string) Str::of($name)->replaceFirst($this->rootNamespace(), '')->finish('Dto');
+        $name = (string) Str::of($name)->replaceFirst($this->rootNamespace(), '');
 
         return app_path('Dto/'.str_replace('\\', '/', $name).'.php');
     }
