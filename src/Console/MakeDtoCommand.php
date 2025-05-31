@@ -129,6 +129,15 @@ class MakeDtoCommand extends GeneratorCommand
                                 if (class_exists($appClass)) {
                                     $uses[$unionTypeName] = $appClass;
                                     $type[$typeKey] = $unionTypeName;
+                                } else {
+                                    $appClass = $unionType;
+                                    if (class_exists($appClass)) {
+                                        $uses[$unionTypeName] = $appClass;
+                                        $type[$typeKey] = $unionTypeName;
+                                    } else {
+                                        // If the class does not exist, we keep the original type
+                                        $type[$typeKey] = $unionType;
+                                    }
                                 }
                             }
                         }
