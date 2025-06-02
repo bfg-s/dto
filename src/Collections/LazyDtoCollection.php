@@ -11,6 +11,7 @@ use Illuminate\Support\LazyCollection as BaseLazyCollection;
  * @template-covariant TValue
  *
  * @implements \Illuminate\Support\Enumerable<TKey, TValue>
+ * @extends BaseLazyCollection<TKey, TValue>
  */
 class LazyDtoCollection extends BaseLazyCollection
 {

@@ -12,6 +12,7 @@ use Illuminate\Support\Collection as BaseCollection;
  *
  * @implements \ArrayAccess<TKey, TValue>
  * @implements \Illuminate\Support\Enumerable<TKey, TValue>
+ * @extends BaseCollection<TKey, TValue>
  */
 class DtoCollection extends BaseCollection
 {
