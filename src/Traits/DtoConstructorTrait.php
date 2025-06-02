@@ -13,6 +13,7 @@ use Bfg\Dto\Exceptions\DtoUndefinedCacheException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Fluent;
@@ -199,7 +200,7 @@ trait DtoConstructorTrait
      * @return DtoCollection
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromCollection(DtoCollection|array $items, ...$other): DtoCollection
+    public static function fromCollection(Collection|array $items, ...$other): DtoCollection
     {
         if ($items instanceof SupportCollection) {
             $items = $items->toArray();
