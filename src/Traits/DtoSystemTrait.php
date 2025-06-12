@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bfg\Dto\Traits;
 
+use Bfg\Dto\Attributes\DtoAuthenticatedUser;
 use Bfg\Dto\Attributes\DtoFromCache;
 use Bfg\Dto\Attributes\DtoFromConfig;
 use Bfg\Dto\Attributes\DtoFromRequest;
@@ -102,6 +103,17 @@ trait DtoSystemTrait
     }
 
     /**
+     * Prepare data for DTO instance creation
+     *
+     * @param  array  $data
+     * @return array
+     */
+    protected static function prepareData(array $data): array
+    {
+        return $data;
+    }
+
+    /**
      * Make instance from prepared array data
      *
      * @param  array  $data
@@ -123,6 +135,7 @@ trait DtoSystemTrait
             }
             $data = $validator->validated();
         }
+        $data = static::prepareData($data);
         $created = [];
         $constructorParameters = static::getConstructorParameters();
         foreach ($constructorParameters as $parameter) {
@@ -183,9 +196,24 @@ trait DtoSystemTrait
 
         $dto = new static(...$argumentsToInstance);
 
+        $notSetArgs = array_diff_key($data, $argumentsToInstance);
+
+        $setProperty = [];
+
+        foreach ($notSetArgs as $key => $value) {
+            if (! in_array($key, $extendedKeys) && property_exists($dto, $key)) {
+                $dto->set($key, $value);
+                $setProperty[] = $key;
+            }
+        }
+
         if ((static::$allowDynamicProperties || ! count($constructorParameters)) && $data) {
             foreach ($data as $key => $value) {
-                if (! array_key_exists($key, $argumentsToInstance) && ! in_array($key, $extendedKeys)) {
+                if (
+                    ! array_key_exists($key, $argumentsToInstance)
+                    && ! in_array($key, $extendedKeys)
+                    && ! in_array($key, $setProperty)
+                ) {
                     $dto->{$key} = $value;
                 }
             }
@@ -228,10 +256,14 @@ trait DtoSystemTrait
 
         [$nameInData, $notFoundKeys, $isOtherParam, $data] = static::detectAttributesForExtended($data, $key);
 
-        if ($model) {
-            if (! array_key_exists($nameInData, $data)) {
+        $nev = '___NO_EXISTS_VALUE___';
+        $valueInDataExists = data_get($data, $nameInData, $nev) !== $nev;
 
-                $data[$nameInData] = $model->{$nameInData};
+        if ($model) {
+            if (! $valueInDataExists) {
+
+                $data[$key] = data_get($model, $nameInData);
+                $valueInDataExists = true;
             }
         }
 
@@ -247,8 +279,8 @@ trait DtoSystemTrait
                 }
             }
         } else {
-            $value = array_key_exists($nameInData, $data)
-                ? $data[$nameInData]
+            $value = $valueInDataExists
+                ? data_get($data, $nameInData)
                 : null;
         }
 
@@ -282,11 +314,13 @@ trait DtoSystemTrait
 
         [$type, $hasCollection, $hasArray] = static::detectType($type);
         [$nameInData, $notFoundKeys, $isOtherParam, $data] = static::detectAttributes($data, $parameter);
-
+        $nev = '___NO_EXISTS_VALUE___';
+        $valueInDataExists = data_get($data, $nameInData, $nev) !== $nev;
         if ($model) {
-            if (! array_key_exists($nameInData, $data)) {
+            if (! $valueInDataExists) {
 
-                $data[$nameInData] = $model->{$nameInData};
+                $data[$parameter->getName()] = data_get($model, $nameInData);
+                $valueInDataExists = true;
             }
         }
 
@@ -294,7 +328,7 @@ trait DtoSystemTrait
         if (
             $type->isBuiltin()
             && (
-                ! array_key_exists($nameInData, $data)
+                ! $valueInDataExists
                 && ! $parameter->isDefaultValueAvailable()
             )
             && ! $type->allowsNull()
@@ -324,8 +358,8 @@ trait DtoSystemTrait
                 }
             }
         } else {
-            $value = array_key_exists($nameInData, $data)
-                ? $data[$nameInData]
+            $value = $valueInDataExists
+                ? data_get($data, $nameInData)
                 : ($parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null);
         }
         $value = static::fireEvent(['created', $name], $value, static::SET_CURRENT_DATA, $data, $parameter);
@@ -394,7 +428,9 @@ trait DtoSystemTrait
         $attributes = $parameter->getAttributes(DtoName::class);
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
-            if (array_key_exists($instance->name, $data)) {
+            $nev = '___NO_EXISTS_VALUE___';
+            $valueInDataExists = data_get($data, $instance->name, $nev) !== $nev;
+            if ($valueInDataExists) {
                 $nameInData = $instance->name;
             } else {
                 $notFoundKeys[] = $instance->name;
@@ -403,9 +439,9 @@ trait DtoSystemTrait
         $attributes = $parameter->getAttributes(DtoFromRoute::class);
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
-            if (! array_key_exists($nameInData, $data) || ! $data[$nameInData]) {
-                $data[$nameInData] = request()->route($instance->name ?: $nameInData);
-            }
+            $data[$nameInData] = request()->route(
+                $instance->name ?: $nameInData
+            );
             $isOtherParam = true;
         }
         $attributes = $parameter->getAttributes(DtoFromConfig::class);
@@ -459,9 +495,7 @@ trait DtoSystemTrait
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
             if ($instance->from === $key) {
-                if (! array_key_exists($nameInData, $data) || ! $data[$nameInData]) {
-                    $data[$nameInData] = request()->route($instance->name ?: $nameInData);
-                }
+                $data[$nameInData] = request()->route($instance->name ?: $nameInData);
                 $isOtherParam = true;
             }
         }
@@ -495,6 +529,12 @@ trait DtoSystemTrait
                 $isOtherParam = true;
             }
         }
+        $attributes = $property->getAttributes(DtoAuthenticatedUser::class);
+        foreach ($attributes as $attribute) {
+            $instance = $attribute->newInstance();
+            $data[$key] = auth($instance->guard)->user();
+            $isOtherParam = true;
+        }
 
         return [$nameInData, $notFoundKeys, $isOtherParam, $data];
     }
@@ -512,22 +552,26 @@ trait DtoSystemTrait
         array $data,
         string|null $dtoModel = null,
     ): mixed {
+        $nev = '___NO_EXISTS_VALUE___';
+        $valueInDataExists = data_get($data, $nameInData, $nev) !== $nev;
+        $dataValue = data_get($data, $nameInData);
+
         if (! is_subclass_of($class, Carbon::class) && $class !== Carbon::class) {
             if (is_subclass_of($class, DtoCollection::class) || $class === DtoCollection::class) {
-                $value = new $class($data[$nameInData]);
+                $value = new $class($dataValue);
             } elseif (
                 (is_subclass_of($class, FormRequest::class) || $class === FormRequest::class)
                 || (is_subclass_of($class, Request::class) || $class === Request::class)
             ) {
-                $value = isset($data[$nameInData]) ? new $class($data[$nameInData]) : app($class);
+                $value = $valueInDataExists ? new $class($dataValue) : app($class);
             } else {
-                $value = $data[$nameInData] ?? null;
+                $value = $dataValue;
                 if (! $value && ! enum_exists($class)) {
                     $value = app($class);
                 }
             }
         } else {
-            $value = $data[$nameInData] ?? null;
+            $value = $dataValue;
 
             if (! $value instanceof Carbon) {
 
@@ -558,7 +602,7 @@ trait DtoSystemTrait
         array $data,
         bool $allowsNull,
     ): mixed {
-        $val = $data[$nameInData] ?? null;
+        $val = data_get($data, $nameInData);
         if (is_numeric($val)) {
             $value = $class::find($val);
             if (! $value && ! $allowsNull) {
@@ -615,9 +659,12 @@ trait DtoSystemTrait
             ? $classCollection
             : DtoCollection::class;
 
-        $namedData = array_key_exists($nameInData, $data)
-            ? $data[$nameInData]
-            : ($model ? $model->{$nameInData} : []);
+        $nev = '___NO_EXISTS_VALUE___';
+        $valueInDataExists = data_get($data, $nameInData, $nev) !== $nev;
+
+        $namedData = $valueInDataExists
+            ? data_get($data, $nameInData)
+            : ($model ? data_get($model, $nameInData) : null);
 
         if ($hasCollection) {
             if (is_string($namedData)) {
@@ -636,7 +683,7 @@ trait DtoSystemTrait
                     }
                 }
             }
-        } elseif ($hasArray) {
+        } elseif ($hasArray && is_iterable($namedData)) {
             $value = $allowsNull ? null : [];
             foreach ($namedData as $item) {
                 $value[] = $class::fromAnything($item);
@@ -665,7 +712,7 @@ trait DtoSystemTrait
     /**
      * Get dto constructor parameters
      *
-     * @return \ReflectionParameter[]|array<int, \ReflectionParameter>
+     * @return array<int, \ReflectionParameter>
      */
     public static function getConstructorParameters(): array
     {
@@ -682,6 +729,23 @@ trait DtoSystemTrait
         return static::$__constructorParameters[static::class] = [];
     }
 
+    /**
+     * Find a constructor parameter by its name
+     *
+     * @param  non-empty-string  $name
+     * @return \ReflectionParameter|null
+     */
+    public static function findConstructorParameter(string $name): ReflectionParameter|null
+    {
+        $parameters = static::getConstructorParameters();
+        foreach ($parameters as $parameter) {
+            if ($parameter->getName() === $name) {
+                return $parameter;
+            }
+        }
+        return null;
+    }
+
     protected static function isJson(string $data): bool
     {
         $data = trim($data);
@@ -689,7 +753,7 @@ trait DtoSystemTrait
         if ($data === '') {
             return false;
         }
-        return !! preg_match('/^(?:\{.*\}|\[.*\])$/s', $data);
+        return !! preg_match('/^(?:\{.*}|\[.*])$/s', $data);
     }
 
     protected static function isSerialize(string $data): bool

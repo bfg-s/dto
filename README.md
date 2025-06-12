@@ -38,6 +38,7 @@ php artisan make:dto UserDto
     * [fromStaticCache](#fromstaticcache)
     * [fromCollection](#fromcollection)
     * [fromCache](#fromcache)
+    * [fromString](#fromstring)
 * [Nested DTO calls](#nested-dto-calls)
 * [Binding](#binding)
     * [Binding to the model](#binding-to-the-model)
@@ -55,7 +56,10 @@ php artisan make:dto UserDto
 * [Property by method with](#property-by-method-with)
 * [Property logsEnabled](#property-logsenabled)
 * [Meta](#meta)
+* [HasDtoTrait](#hasdtotrait)
 * [Attributes](#attributes)
+    * [DtoItem](#dtoitem)
+    * [DtoCast](#dtocast)
     * [DtoName](#dtoname)
     * [DtoFromConfig](#dtofromconfig)
     * [DtoFromRequest](#dtofromrequest)
@@ -318,6 +322,12 @@ $dto = UserDto::fromCache(function () {
         'email' => 'test@gmail.com',
     ]);
 });
+```
+
+#### fromString
+You can create a new DTO from string.
+```php
+$dto = UserDto::fromString('John Doe|test@gmail.com', '|'); 
 ```
 
 #### fromSource
@@ -908,8 +918,28 @@ dump($dto->getMeta()); // ['key' => 'value', 'key2' => 'value2']
 $dto->unsetMeta('key');
 ```
 
+### HasDtoTrait
+You can use the `HasDtoTrait` trait in your model or request to use the DTO.
+```php
+use Bfg\Dto\HasDtoTrait;
+use Bfg\Dto\Attributes\DtoClass;
+
+#[DtoClass(UserDto::class)]
+class User extends Model
+{
+    /** @use HasDtoTrait<UserDto> */
+    use HasDtoTrait;
+}
+```
+After that, you can use the DTO in your model.
+```php
+$user = User::find(1);
+$dto = $user->getDto(); // UserDto object
+```
+
 ### Attributes
 You can use attributes.
+
 #### DtoItem
 You can set `DTO` for `Collection` property
 
@@ -924,6 +954,42 @@ class UserDto extends Dto
     ) {}
 }
 ```
+
+#### DtoCast
+You can use the `DtoCast` attribute to set the DTO for the property.
+```php
+use Bfg\Dto\Dto;
+use Bfg\Dto\Attributes\DtoCast;
+
+class UserPhoneDto extends Dto
+{            
+    public function __construct(
+        #[DtoCast('int')] public int $number,
+    ) {}
+}
+
+UserPhoneDto::fromArray([
+    'number' => '1234567890',
+]);
+```
+> Attention! If you do not specify the property casting, then, when you try to assign a different type to the property, there will be a PHP error that will say that you are trying to assign a different type than expected.
+
+#### DtoItem
+You can use the `DtoItem` attribute to set the DTO for the collection property.
+```php
+use Bfg\Dto\Dto;
+use Bfg\Dto\Attributes\DtoItem;
+use Bfg\Dto\Collections\DtoCollection;
+
+class UserContactDto extends Dto
+{            
+    public function __construct(
+        #[DtoItem(UserPhoneDto::class)] public DtoCollection $phones,
+        #[DtoItem(UserEmailDto::class)] public DtoCollection $emails,
+    ) {}
+}
+```
+
 #### DtoName
 You can use the `DtoName` attribute to add the name of the DTO.
 ```php
@@ -934,6 +1000,7 @@ class UserDto extends Dto
     public function __construct(
         #[DtoName('user')] 
         public string $name,
+        #[DtoName('contacts.email')] 
         public string $email,
         public ?string $password,
     ) {}
@@ -941,7 +1008,9 @@ class UserDto extends Dto
 
 $dto = UserDto::fromArray([
     'user' => 'John Doe',
-    'email' => 'test@gmail.com',
+    'contacts' => [
+        'email' => 'test@gmail.com',
+    ],
     'password' => '123456'
 ]);
 // Or
@@ -953,7 +1022,7 @@ $dto = UserDto::fromArray([
 
 echo $dto->name; // John Doe
 ```
-Here we have added an additional field name to the "name" field and we can now use 2 fields to insert data.
+Here we have added a field name to the "name" field and we can now use two fields to insert data.
 
 For property extends:
 ```php

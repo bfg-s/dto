@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bfg\Dto\Traits;
 
+use Bfg\Dto\Attributes\DtoCast;
 use Bfg\Dto\Exceptions\DtoInvalidCastException;
 use Bfg\Dto\Interfaces\CastsInboundAttributes;
 use Brick\Math\BigDecimal;
@@ -470,15 +471,24 @@ trait DtoCastingTrait
     /**
      * Get the type of cast for a model attribute.
      *
-     * @param  string  $key
+     * @param  non-empty-string  $name
      * @return string|null
      */
-    protected static function getCastType(string $key): ?string
+    protected static function getCastType(string $name): ?string
     {
-        $castType = static::$cast[$key] ?? null;
+        /** @var \ReflectionParameter|null $param */
+        $param = static::findConstructorParameter($name);
 
-        if (isset(static::$__castTypeCache[$castType])) {
-            return static::$__castTypeCache[$castType];
+        if ($param !== null) {
+            $castAttributes = $param->getAttributes(DtoCast::class);
+            if (isset($castAttributes[0])) {
+                $castAttribute = $castAttributes[0]->newInstance();
+                $castType = $castAttribute->cast;
+            }
+        }
+
+        if (! isset($castType)) {
+            $castType = static::$cast[$name] ?? null;
         }
 
         if ($castType && static::isCustomDateTimeCast($castType)) {
@@ -493,7 +503,7 @@ trait DtoCastingTrait
             $convertedCastType = trim(strtolower($castType));
         }
 
-        return static::$__castTypeCache[$castType] = $convertedCastType ?? null;
+        return $convertedCastType ?? null;
     }
 
     /**

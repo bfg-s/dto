@@ -180,7 +180,7 @@ trait DtoConstructorTrait
      * @return static
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedCacheException
      */
-    public static function fromCache(callable $callback = null): static
+    public static function fromCache(callable|null $callback = null): static
     {
         $serialized = Cache::get(static::class);
 
@@ -325,7 +325,7 @@ trait DtoConstructorTrait
      * @param  \Illuminate\Database\Eloquent\Model|null  $model
      * @return static
      */
-    public static function fromModel(Model $model = null): static
+    public static function fromModel(Model|null $model = null): static
     {
         $start = static::startTime();
         $model = static::configureModel($model);
@@ -345,7 +345,7 @@ trait DtoConstructorTrait
      * @return DtoCollection<static>|static|null
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromSerialize(string $serialize = null): DtoCollection|static|null
+    public static function fromSerialize(string|null $serialize = null): DtoCollection|static|null
     {
         $start = static::startTime();
         $serialize = static::fireEvent('prepareSerialize', $serialize, static::SET_CURRENT_DATA);
@@ -369,7 +369,7 @@ trait DtoConstructorTrait
      * @return DtoCollection<static>|static
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromJson(string $json = null): DtoCollection|static
+    public static function fromJson(string|null $json = null): DtoCollection|static
     {
         $start = static::startTime();
         $data = $json ? json_decode($json, true) : [];
@@ -393,7 +393,7 @@ trait DtoConstructorTrait
      * @param  FormRequest|Request|class-string<FormRequest|Request>|null  $request
      * @return static
      */
-    public static function fromRequest(FormRequest|Request|string $request = null): static
+    public static function fromRequest(FormRequest|Request|string|null $request = null): static
     {
         $start = static::startTime();
 
@@ -427,7 +427,7 @@ trait DtoConstructorTrait
      * @return DtoCollection<static>|static
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    public static function fromArray(array $data = null): DtoCollection|static
+    public static function fromArray(array|null $data = null): DtoCollection|static
     {
         $start = static::startTime();
 
@@ -439,7 +439,7 @@ trait DtoConstructorTrait
             return static::fromCollection($data);
         }
 
-        $data = static::fireEvent('prepareArray', $data ?: [], static::SET_CURRENT_DATA);
+        $data = static::fireEvent('prepareArray', $data, static::SET_CURRENT_DATA);
 
         [$dto, $arguments] = static::makeInstanceFromArray($data);
 
@@ -552,5 +552,19 @@ trait DtoConstructorTrait
         $dto->log('createdFromEmpty', [], ms: static::endTime($start));
 
         return $dto;
+    }
+
+    /**
+     * Create a new instance from a string
+     *
+     * @param  string  $string
+     * @param  non-empty-string  $separator
+     * @return static|null
+     */
+    public static function fromString(string $string, string $separator = ','): static|null
+    {
+        $data = explode($separator, $string);
+
+        return static::new(...$data);
     }
 }

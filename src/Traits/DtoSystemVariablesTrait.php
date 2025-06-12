@@ -50,13 +50,6 @@ trait DtoSystemVariablesTrait
     ];
 
     /**
-     * The cache of the converted cast types.
-     *
-     * @var array
-     */
-    protected static array $__castTypeCache = [];
-
-    /**
      * The encrypter instance that is used to encrypt attributes.
      *
      * @var \Illuminate\Contracts\Encryption\Encrypter|null

@@ -124,6 +124,12 @@ class DtoConstructorTest extends TestCase
                     'name' => 'John Doe',
                     'email' => 'test2@gmail.com',
                 ],
+                'collect' => [
+                    [
+                        'name' => 'John Doe',
+                        'email' => 'test3@gmail.com',
+                    ]
+                ]
             ]);
         });
 
@@ -133,6 +139,8 @@ class DtoConstructorTest extends TestCase
         $this->assertTrue($dto->test->name === 'John Doe');
         $this->assertTrue($dto->test->email === 'test2@gmail.com');
         $this->assertTrue($dto->tests === []);
+        $this->assertTrue($dto->collect->isNotEmpty());
+        $this->assertTrue($dto->collect->first()->email === 'test3@gmail.com');
     }
 
     public function test_from_collection()

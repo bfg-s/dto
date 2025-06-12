@@ -109,6 +109,6 @@ class DtoReflectionTest extends TestCase
 
         $names = $dto->getNames();
 
-        $this->assertTrue($names === ['number', 'name', 'email', 'test', 'tests', 'id']);
+        $this->assertTrue($names === ['number', 'name', 'email', 'test', 'collect', 'tests', 'id']);
     }
 }

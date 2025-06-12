@@ -20,6 +20,7 @@ class DtoToTest extends TestCase
                 'name' => 'name',
                 'email' => 'email',
             ],
+            "collect" => [],
             'tests' => [
                 [
                     'name' => 'name',
@@ -51,6 +52,7 @@ class DtoToTest extends TestCase
                 'name' => 'name',
                 'email' => 'email',
             ],
+            "collect" => [],
             'tests' => [
                 [
                     'name' => 'name',
@@ -117,6 +119,7 @@ class DtoToTest extends TestCase
                 'name' => 'name',
                 'email' => 'email',
             ],
+            "collect" => [],
             'tests' => [
                 [
                     'name' => 'name',
