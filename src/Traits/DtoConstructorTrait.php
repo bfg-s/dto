@@ -258,6 +258,9 @@ trait DtoConstructorTrait
             return static::fromCollection($item);
         } elseif ($item instanceof Fluent) {
             return static::fromFluent($item);
+        } elseif (is_object($item)) {
+            $item = get_object_vars($item);
+            return static::fromArray($item);
         }
         return static::fromEmpty();
     }
