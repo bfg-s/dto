@@ -101,7 +101,7 @@ trait DtoConstructorTrait
         } else {
             $return = static::fromEmpty();
         }
-        call_user_func([$return, 'setImportType'], 'url', compact('url'));
+        call_user_func([$return, 'setImportType'], 'url', $url);
         return $return;
     }
 
@@ -357,10 +357,10 @@ trait DtoConstructorTrait
         if ($dto instanceof Dto) {
             $dto->log('createdFromSerialize', ms: static::endTime($start));
             $return = $dto;
-            call_user_func([$return, 'setImportType'], 'serializeDto', compact('serialize'));
+            call_user_func([$return, 'setImportType'], 'serializeDto', $serialize);
         } else {
             $return = static::fromAnything($dto);
-            call_user_func([$return, 'setImportType'], 'serializeAny', compact('serialize'));
+            call_user_func([$return, 'setImportType'], 'serializeAny', $serialize);
         }
         return $return;
     }
@@ -386,7 +386,7 @@ trait DtoConstructorTrait
             $dto->log('createdFromJson', [], ms: static::endTime($start));
             $return = $dto;
         }
-        call_user_func([$return, 'setImportType'], 'json', compact('json'));
+        call_user_func([$return, 'setImportType'], 'json', $json);
         return $return;
     }
 

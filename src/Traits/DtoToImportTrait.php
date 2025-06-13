@@ -17,7 +17,7 @@ trait DtoToImportTrait
         $importType = static::getImportType();
         $type = data_get($importType, 'type');
         if ($type === 'url') {
-            return data_get($importType, 'options.url', static::$source);
+            return data_get($importType, 'source', static::$source);
         } else if ($type === 'serializeDto') {
             return $this->toSerialize();
         } else if ($type === 'serializeAny') {

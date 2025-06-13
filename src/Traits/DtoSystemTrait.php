@@ -18,7 +18,6 @@ use Bfg\Dto\Exceptions\DtoModelBindingFailException;
 use Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException;
 use Bfg\Dto\Exceptions\DtoValidationException;
 use Carbon\Carbon;
-use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Client\PendingRequest;
@@ -31,52 +30,6 @@ use ReflectionParameter;
 
 trait DtoSystemTrait
 {
-    /**
-     * Get the caster class to use when casting from / to this cast target.
-     *
-     * @param  array  $arguments
-     * @return \Illuminate\Contracts\Database\Eloquent\CastsAttributes<Dto|DtoCollection, iterable>
-     */
-    public static function castUsing(array $arguments): CastsAttributes
-    {
-        return new class(static::class, static::$source) implements CastsAttributes
-        {
-            /**
-             * @param  class-string<Dto>  $class
-             * @param  string|null  $source
-             */
-            public function __construct(
-                protected string $class,
-                protected string|null $source,
-            ) {
-            }
-
-            public function get($model, $key, $value, $attributes)
-            {
-                if (! isset($attributes[$key]) || ! $attributes[$key]) {
-                    return null;
-                }
-
-                $this->class = $this->class::discoverCastedDto($model, $key, $value, $attributes);
-
-                return $this->class::fromAnything(dto_string_replace($attributes[$key], $model));
-            }
-
-            public function set($model, $key, $value, $attributes): array
-            {
-                if ($value instanceof Dto || $value instanceof DtoCollection) {
-                    return [$key => $this->source ?: (method_exists($value, 'toImport')
-                        ? $value->toImport()
-                        : $value->toJson(JSON_UNESCAPED_UNICODE)
-                    )];
-                } elseif (is_string($value)) {
-                    return [$key => $value];
-                }
-                return [$key => $value];
-            }
-        };
-    }
-
     /**
      * Set import type for the DTO
      *
@@ -98,7 +51,7 @@ trait DtoSystemTrait
     {
         return static::$__importType[static::class] ?? [
             'type' => 'json',
-            'options' => [],
+            'source' => null,
         ];
     }
 

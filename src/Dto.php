@@ -8,6 +8,7 @@ use AllowDynamicProperties;
 use ArrayAccess;
 use Bfg\Dto\Interfaces\DtoContract;
 use Bfg\Dto\Traits\DtoCastingTrait;
+use Bfg\Dto\Traits\DtoCastUsingTrait;
 use Bfg\Dto\Traits\DtoConstructorTrait;
 use Bfg\Dto\Traits\DtoEventsTrait;
 use Bfg\Dto\Traits\DtoHelpersTrait;
@@ -64,6 +65,7 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Cas
     use DtoSystemVariablesTrait;
     use DtoConstructorTrait;
     use DtoReflectionTrait;
+    use DtoCastUsingTrait;
     use DtoCastingTrait;
     use DtoHelpersTrait;
     use DtoSystemTrait;

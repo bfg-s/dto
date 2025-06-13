@@ -23,12 +23,14 @@ trait DtoCollectionMethodsTrait
      * Set import type for the DTO
      *
      * @param  string  $type
-     * @param  array  $options
+     * @param  mixed|null  $source
      * @return void
      */
-    public function setImportType(string $type, array $options = []): void
+    public function setImportType(string $type, mixed $source = null): void
     {
-        static::$__importType[static::class][spl_object_id($this)] = compact('type', 'options');
+        if (! isset(static::$__importType[static::class])) {
+            static::$__importType[static::class] = compact('type', 'source');
+        }
     }
 
     /**
