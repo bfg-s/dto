@@ -408,8 +408,12 @@ trait DtoCastingTrait
      */
     protected static function fromJsonConvert(?string $value, bool $asObject = false): mixed
     {
-        if ($value === null || $value === '') {
+        if ($value === null) {
             return null;
+        }
+
+        if ($value === '[]' || $value === '{}' || $value === '') {
+            return $asObject ? new \stdClass() : [];
         }
 
         return Json::decode($value, ! $asObject);
