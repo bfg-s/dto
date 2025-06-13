@@ -99,6 +99,11 @@ trait DtoReflectionTrait
         foreach (static::$extends as $key => $types) {
             $vars[$key] = static::$__parameters[static::class][spl_object_id($this)][$key] ?? null;
         }
+        foreach (get_object_vars($this) as $key => $value) {
+            if (! array_key_exists($key, $vars)) {
+                $vars[$key] = $value;
+            }
+        }
         return static::$__vars[static::class][spl_object_id($this)] = $vars;
     }
 
