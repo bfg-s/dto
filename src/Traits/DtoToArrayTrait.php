@@ -237,6 +237,28 @@ trait DtoToArrayTrait
             $result[$key] = $value;
         }
 
+        // Dynamically add extends properties
+        foreach (get_object_vars($this) as $key => $value) {
+            if (! isset($result[$key])) {
+                if (in_array($key, static::$hidden) && ! static::$__strictToArray) {
+                    continue;
+                }
+                if ($keysOnly && ! in_array($key, $keysOnly)) {
+                    continue;
+                }
+
+                if ($value instanceof Arrayable) {
+                    $result[$key] = $value->toArray();
+                } elseif ($value instanceof Model) {
+                    $result[$key] = $value->id;
+                } elseif ($value instanceof Carbon) {
+                    $result[$key] = $value->format(static::$dateFormat);
+                } else {
+                    $result[$key] = $value;
+                }
+            }
+        }
+
         foreach (static::$encrypted as $key) {
 
             if (array_key_exists($key, $result)) {
