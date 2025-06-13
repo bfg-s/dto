@@ -34,12 +34,12 @@ trait DtoSystemTrait
      * Set import type for the DTO
      *
      * @param  string  $type
-     * @param  array  $options
+     * @param  mixed|null  $source
      * @return void
      */
-    public static function setImportType(string $type, array $options = []): void
+    public static function setImportType(string $type, mixed $source = null): void
     {
-        static::$__importType[static::class] = compact('type', 'options');
+        static::$__importType[static::class] = compact('type', 'source');
     }
 
     /**
