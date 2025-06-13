@@ -159,7 +159,9 @@ trait DtoMagicTrait
             } elseif ($item instanceof Model) {
                 $result[$key] = $item->id;
             } elseif (is_object($item)) {
-                unset($result[$key]);
+                $result[$key] = serialize($item);
+            } else {
+                $result[$key] = $item;
             }
         }
 
