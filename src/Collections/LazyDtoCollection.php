@@ -3,6 +3,7 @@
 namespace Bfg\Dto\Collections;
 
 use Bfg\Dto\Traits\DtoCollectionMethodsTrait;
+use Illuminate\Contracts\Database\Eloquent\Castable;
 use Illuminate\Support\LazyCollection as BaseLazyCollection;
 
 /**
@@ -13,7 +14,7 @@ use Illuminate\Support\LazyCollection as BaseLazyCollection;
  * @implements \Illuminate\Support\Enumerable<TKey, TValue>
  * @extends BaseLazyCollection<TKey, TValue>
  */
-class LazyDtoCollection extends BaseLazyCollection
+class LazyDtoCollection extends BaseLazyCollection implements Castable
 {
     use DtoCollectionMethodsTrait;
 }

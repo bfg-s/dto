@@ -6,25 +6,20 @@ namespace Bfg\Dto\Traits;
 
 use Bfg\Dto\Collections\DtoCollection;
 use Bfg\Dto\Dto;
+use Bfg\Dto\Traps\DtoCastingStoreTrap;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
+use Illuminate\Support\Str;
 
 trait DtoCastUsingTrait
 {
     /**
      * Specify the collection for the cast.
      *
-     * @param  'url'|'serializeDto'|'serializeAny'|'json'  $storeType
-     * @param  mixed|null  $source
-     * @return string
+     * @return \Bfg\Dto\Traps\DtoCastingStoreTrap|static
      */
-    public static function as(string $storeType, mixed $source = null): string
+    public static function store(): DtoCastingStoreTrap|static
     {
-        static::$__importType[static::class] = [
-            'type' => $storeType,
-            'source' => $source,
-        ];
-
-        return static::class;
+        return new DtoCastingStoreTrap(static::class);
     }
 
     /**
@@ -55,7 +50,31 @@ trait DtoCastUsingTrait
 
                 $this->class = $this->class::discoverCastedDto($model, $key, $value, $attributes);
 
-                return $this->class::fromAnything(dto_string_replace($attributes[$key], $model));
+                $data = dto_string_replace($attributes[$key], $model, '{{ * }}');
+
+                if (
+                    ($importType = $this->class::getImportType())
+                    && str_starts_with($importType['type'], 'to')
+                ) {
+                    $methodSuffix = Str::studly(substr($importType['type'], 2));
+                    $method = 'from'.$methodSuffix;
+                    if (method_exists($this->class, $method)) {
+                        $result = call_user_func([$this->class, $method], $data);
+                        if ($result instanceof $this->class) {
+                            return $result;
+                        } else {
+                            throw new \BadMethodCallException(sprintf(
+                                "Method %s in class %s for import type %s must return an instance of %s.",
+                                $method,
+                                $this->class,
+                                $importType['type'],
+                                $this->class
+                            ));
+                        }
+                    }
+                }
+
+                return $this->class::from($data);
             }
 
             public function set($model, $key, $value, $attributes): array

@@ -46,6 +46,8 @@ use Illuminate\Support\Traits\Tappable;
  *
  * @package Bfg\Dto
  *
+ * @template TModel of \Illuminate\Database\Eloquent\Model|null
+ *
  * @implements ArrayAccess<string, mixed>
  * @implements Arrayable<string, mixed>
  * @implements Jsonable<string, mixed>
@@ -67,6 +69,7 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Cas
     use DtoReflectionTrait;
     use DtoCastUsingTrait;
     use DtoCastingTrait;
+    /** @use DtoHelpersTrait<TModel> */
     use DtoHelpersTrait;
     use DtoSystemTrait;
     use DtoEventsTrait;

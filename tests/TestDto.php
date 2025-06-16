@@ -35,4 +35,31 @@ class TestDto extends Dto
         public Test2Dto|array $tests = [],
     ) {
     }
+
+    public function toDatabase(): string
+    {
+        return json_encode([
+            'number' => $this->number + 11,
+            'name' => $this->name,
+            'email' => $this->email,
+            'test' => $this->test->toArray(),
+            'collect' => $this->collect->toArray(),
+            'tests' => $this->tests instanceof DtoCollection ? $this->tests->toArray() : $this->tests,
+        ]);
+    }
+
+    public static function fromDatabase(string $data): DtoCollection|static
+    {
+        $data = json_decode($data, true);
+
+        if (is_assoc($data)) {
+            $data['number'] = ((int) $data['number']) + 1;
+
+            return static::fromArray($data);
+        }
+
+        $data[0]['number'] = ((int) $data[0]['number']) + 1;
+
+        return static::fromCollection($data);
+    }
 }

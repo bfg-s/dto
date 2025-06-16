@@ -35,23 +35,27 @@ trait DtoSystemTrait
      *
      * @param  string  $type
      * @param  mixed|null  $source
+     * @param  bool  $manual
+     * @param  array  $args
      * @return void
      */
-    public static function setImportType(string $type, mixed $source = null): void
+    public static function setImportType(string $type, mixed $source = null, bool $manual = false, array $args = []): void
     {
-        static::$__importType[static::class] = compact('type', 'source');
+        static::$__importType[static::class] = compact('type', 'source', 'manual', 'args');
     }
 
     /**
      * Get an import type for the DTO
      *
-     * @return array
+     * @return array{type: string, source: mixed|null, manual: bool, args: array<string, mixed>}
      */
     public static function getImportType(): array
     {
         return static::$__importType[static::class] ?? [
             'type' => 'json',
             'source' => null,
+            'manual' => false,
+            'args' => [],
         ];
     }
 
@@ -632,18 +636,18 @@ trait DtoSystemTrait
                     : new $classCollection();
                 if ($value && $namedData) {
                     foreach ($namedData as $item) {
-                        $value->push($class::fromAnything($item));
+                        $value->push($class::from($item));
                     }
                 }
             }
         } elseif ($hasArray && is_iterable($namedData)) {
             $value = $allowsNull ? null : [];
             foreach ($namedData as $item) {
-                $value[] = $class::fromAnything($item);
+                $value[] = $class::from($item);
             }
         } else {
             $value = $namedData
-                ? ($namedData instanceof DtoCollection ? $class::fromAnything($namedData->first()) : $class::fromAnything($namedData))
+                ? ($namedData instanceof DtoCollection ? $class::from($namedData->first()) : $class::from($namedData))
                 : null;
         }
 

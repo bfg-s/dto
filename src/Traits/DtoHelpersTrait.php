@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 
+/**
+ * @template TModel of Model|null
+ */
 trait DtoHelpersTrait
 {
     public const GET_LENGTH_SERIALIZE = 1;
@@ -62,7 +65,7 @@ trait DtoHelpersTrait
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Model|null
+     * @return TModel
      */
     public function model(): Model|null
     {
@@ -932,5 +935,18 @@ trait DtoHelpersTrait
     public function isNotInstanceOfArray(string $key, string $instance): bool
     {
         return !$this->isInstanceOfArray($key, $instance);
+    }
+
+    /**
+     * Check if the given class is a DTO or a DTO collection.
+     *
+     * @param  mixed  $class
+     * @param  bool  $collection
+     * @return bool
+     */
+    public static function isDto(mixed $class, bool $collection = false): bool
+    {
+        return (($collection && is_subclass_of($class, DtoCollection::class)) || ! $collection)
+            || is_subclass_of($class, Dto::class);
     }
 }

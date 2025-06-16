@@ -1588,6 +1588,56 @@ php artisan make:dto-docs
 ### Dto like model cast
 You can use the Dto class as a cast class for a model with a JSON or link field.
 Keep in mind that if the array is associative, it will return the Dto class, but if not, it will return a collection.
+```php
+use Bfg\Dto\Dto;
+
+class UserSettingsDto extends Dto
+{
+    public function __construct(
+        public string $theme,
+        public bool $notificationsEnabled,
+        public string $language,
+    ) {}
+    
+    public function toDatabase(): string 
+    {    
+        return "$this->theme|$this->notificationsEnabled|$this->language";
+    }
+    
+    /**
+     * If you have a static method that ends with the same suffix as the envelope method "toDatabase". 
+     * That is, you must have the following inverse static method "fromDatabase".
+     */
+    public static function fromDatabase(string $data): static
+    {
+        $data = explode('|', $data);
+        
+        return static::from([
+            'theme' => $data[0],
+            'notificationsEnabled' => (bool) $data[1],
+            'language' => $data[2],  
+        ]);         
+    }  
+}
+
+use Illuminate\Database\Eloquent\Model;
+use Bfg\Dto\Collections\DtoCollection;
+
+class User extends Model
+{
+    protected $casts = [
+        'settings' => UserSettingsDto::class, // Use the Dto class as a cast class
+        // Or you can specify the Dto how to save the data in the database
+        'settings' => UserSettingsDto::store()->toDatabase(), // Custom save.
+        // Or you can use the DtoCollection class for a collection
+        'settings' => DtoCollection::using(UserSettingsDto::class),
+        // Or specify dto casting
+        'settings' => DtoCollection::using(UserSettingsDto::store()->toDatabase()),
+    ];
+    protected $fillable = ['name', 'email', 'settings'];
+    protected $hidden = ['password'];
+}
+```
 
 ### Helpers
 You can use helpers.

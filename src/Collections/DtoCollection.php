@@ -2,7 +2,13 @@
 
 namespace Bfg\Dto\Collections;
 
+use Bfg\Dto\Dto;
 use Bfg\Dto\Traits\DtoCollectionMethodsTrait;
+use Illuminate\Contracts\Database\Eloquent\Castable;
+use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
+use Illuminate\Contracts\Database\Eloquent\CastsInboundAttributes;
+use Illuminate\Database\Eloquent\Casts\Json;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 
 /**
@@ -14,7 +20,7 @@ use Illuminate\Support\Collection as BaseCollection;
  * @implements \Illuminate\Support\Enumerable<TKey, TValue>
  * @extends BaseCollection<TKey, TValue>
  */
-class DtoCollection extends BaseCollection
+class DtoCollection extends BaseCollection implements Castable
 {
     use DtoCollectionMethodsTrait;
 
