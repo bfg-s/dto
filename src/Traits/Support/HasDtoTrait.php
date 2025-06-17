@@ -14,14 +14,15 @@ use Bfg\Dto\Dto;
  * This trait is used to mark classes that are DTOs (Data Transfer Objects).
  *
  * @package Bfg\Dto\Traits\Support
- * @template DtoClassName of Dto
+ * @template TDto of Dto<static>
  */
 trait HasDtoTrait
 {
     /**
      * Get the DTO instance from the class.
      *
-     * @return DtoClassName|DtoCollection<int, DtoClassName>
+     * @return TDto|DtoCollection<int, TDto>
+     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public function getDto(): Dto|DtoCollection
     {
@@ -60,6 +61,6 @@ trait HasDtoTrait
             );
         }
 
-        return $dataClass::fromAnything($this);
+        return $dataClass::from($this);
     }
 }

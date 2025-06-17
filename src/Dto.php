@@ -65,6 +65,7 @@ use Illuminate\Support\Traits\Tappable;
 abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Castable
 {
     use DtoSystemVariablesTrait;
+    /** @use DtoConstructorTrait<TModel> */
     use DtoConstructorTrait;
     use DtoReflectionTrait;
     use DtoCastUsingTrait;
@@ -164,9 +165,9 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Cas
     /**
      * Use post by default for anything constructor
      *
-     * @var bool
+     * @var 'get'|'post'|'put'|'patch'|'delete'
      */
-    protected static bool $postDefault = false;
+    protected static string $defaultHttpMethod = 'get';
 
     /**
      * Allow dynamic properties.

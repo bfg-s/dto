@@ -48,18 +48,18 @@ class TestDto extends Dto
         ]);
     }
 
-    public static function fromDatabase(string $data): DtoCollection|static
+    public static function fromDatabase(string $data): array
     {
         $data = json_decode($data, true);
 
         if (is_assoc($data)) {
             $data['number'] = ((int) $data['number']) + 1;
 
-            return static::fromArray($data);
+            return $data;
         }
 
         $data[0]['number'] = ((int) $data[0]['number']) + 1;
 
-        return static::fromCollection($data);
+        return $data;
     }
 }

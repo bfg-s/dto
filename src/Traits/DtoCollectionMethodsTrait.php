@@ -23,6 +23,11 @@ trait DtoCollectionMethodsTrait
     protected static array $__roots = [];
 
     /**
+     * @var array
+     */
+    protected static array $__models = [];
+
+    /**
      * Set import type for the DTO
      *
      * @param  string  $type
@@ -81,6 +86,16 @@ trait DtoCollectionMethodsTrait
         return static::class.':'.$dtoClass;
     }
 
+    public static function setModelFor(string $class, $model): void
+    {
+        static::$__models[$class] = $model;
+    }
+
+    public static function getModelFor(string $class): string|null
+    {
+        return static::$__models[$class] ?? null;
+    }
+
     /**
      * Get the name of the caster class to use when casting from / to this cast target.
      *
@@ -116,6 +131,8 @@ trait DtoCollectionMethodsTrait
                     throw new \InvalidArgumentException('A DTO class must be provided. Use the `using` method to specify it.');
                 }
 
+                $this->collectionClass::setModelFor($dtoClass, $model);
+
                 if (
                     ($importType = $dtoClass::getImportType())
                     && str_starts_with($importType['type'], 'to')
@@ -123,21 +140,16 @@ trait DtoCollectionMethodsTrait
                     $methodSuffix = Str::studly(substr($importType['type'], 2));
                     $method = 'from'.$methodSuffix;
                     if (method_exists($dtoClass, $method)) {
-                        $result = call_user_func([$dtoClass, $method], $data);
-                        if (! $result instanceof DtoCollection) {
-                            throw new \InvalidArgumentException(sprintf(
-                                'Method %s in class %s for import type %s must return a DtoCollection. %s returned.',
-                                $method,
-                                $dtoClass,
-                                $importType['type'],
-                                get_debug_type($result)
-                            ));
+                        $result = call_user_func([$dtoClass, $method], $data, $model, $key, $attributes);
+                        if ($result instanceof DtoCollection) {
+                            return $result;
+                        } else {
+                            $dtoCollection = $dtoClass::from($result, $model);
                         }
-                        return $result;
                     }
                 }
 
-                $dtoCollection = $dtoClass::from($data);
+                $dtoCollection = !isset ($dtoCollection) ? $dtoClass::from($data, $model) : $dtoCollection;
 
                 if (! ($dtoCollection instanceof $this->collectionClass)) {
                     throw new \InvalidArgumentException(
@@ -191,7 +203,8 @@ trait DtoCollectionMethodsTrait
     {
         if (! ($item instanceof Dto)) {
             if ($root = $this->getRoot()) {
-                $item = $root::from($item);
+                $model = static::getModelFor($root);
+                $item = $root::from($item, $model);
             } else {
                 throw new \BadMethodCallException('You can add only dto objects or supported formats with set root.');
             }

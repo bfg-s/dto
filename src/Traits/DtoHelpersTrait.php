@@ -31,6 +31,17 @@ trait DtoHelpersTrait
     public static function new(...$args): static
     {
         $parameters = static::getConstructorParameters();
+        $model = null;
+        if (isset($args['__model'])) {
+            if (
+                ($argModel = is_string($args['__model']) && class_exists($args['__model'])
+                    ? app($args['__model'])
+                    : $args['__model']) instanceof Model
+            ) {
+                $model = $argModel;
+                unset($args['__model']);
+            }
+        }
         $args = collect($args)->mapWithKeys(function ($item, $key) use ($parameters) {
             return [
                 is_int($key) ? $parameters[$key]->getName() : $key => $item
@@ -38,8 +49,8 @@ trait DtoHelpersTrait
         })->toArray();
 
         return $args
-            ? static::fromArray($args)
-            : static::fromEmpty();
+            ? static::fromArray($args, $model)
+            : static::fromEmpty(model: $model);
     }
 
     /**

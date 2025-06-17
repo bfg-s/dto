@@ -22,9 +22,9 @@ php artisan make:dto UserDto
 * [Introduction](#introduction)
 * [First steps](#first-steps)
 * [Constructors](#constructors)
+    * [from](#from)
     * [fromEmpty](#fromempty)
     * [fromArray](#fromarray)
-    * [fromAnything](#fromanything)
     * [fromDto](#fromdto)
     * [fromFluent](#fromfluent)
     * [fromUrl](#fromurl)
@@ -183,6 +183,20 @@ echo $dto->name; // John Doe
 
 ### Constructors
 
+#### from
+You can create a new DTO from anything.
+```php
+$dto = UserDto::from(['name' => 'John Doe', 'email' => 'test@gmail.com']);
+$dto = UserDto::from([
+    ['name' => 'John Doe', 'email' => 'test@gmail.com'],
+    ['name' => 'John Doe', 'email' => 'test@gmail.com'],
+]);
+$dto = UserDto::from(\Illuminate\Foundation\Http\FormRequest::class);
+$dto = UserDto::from('{"name":"John Doe","email":"test@gmail.com"}');
+$dto = UserDto::from('C:8:"UserDto":23:{a:2:{s:4:"name";s:8:"John Doe";s:5:"email";s:13:"test@gmail.com";}}');
+$dto = UserDto::from(User::find(1));
+```
+
 #### fromEmpty
 You can create a new DTO with empty properties.
 ```php
@@ -196,20 +210,6 @@ $dto = UserDto::fromArray([
     'name' => 'John Doe',
     'email' => 'test@gmail.com',
 ]);
-```
-
-#### fromAnything
-You can create a new DTO from anything.
-```php
-$dto = UserDto::fromAnything(['name' => 'John Doe', 'email' => 'test@gmail.com']);
-$dto = UserDto::fromAnything([
-    ['name' => 'John Doe', 'email' => 'test@gmail.com'],
-    ['name' => 'John Doe', 'email' => 'test@gmail.com'],
-]);
-$dto = UserDto::fromAnything(\Illuminate\Foundation\Http\FormRequest::class);
-$dto = UserDto::fromAnything('{"name":"John Doe","email":"test@gmail.com"}');
-$dto = UserDto::fromAnything('C:8:"UserDto":23:{a:2:{s:4:"name";s:8:"John Doe";s:5:"email";s:13:"test@gmail.com";}}');
-$dto = UserDto::fromAnything(User::find(1));
 ```
 
 #### fromDto
@@ -1591,6 +1591,9 @@ Keep in mind that if the array is associative, it will return the Dto class, but
 ```php
 use Bfg\Dto\Dto;
 
+/**
+ * @extends Dto<User>
+ */
 class UserSettingsDto extends Dto
 {
     public function __construct(
@@ -1608,15 +1611,15 @@ class UserSettingsDto extends Dto
      * If you have a static method that ends with the same suffix as the envelope method "toDatabase". 
      * That is, you must have the following inverse static method "fromDatabase".
      */
-    public static function fromDatabase(string $data): static
+    public static function fromDatabase(string $data): array
     {
         $data = explode('|', $data);
         
-        return static::from([
+        return [
             'theme' => $data[0],
             'notificationsEnabled' => (bool) $data[1],
             'language' => $data[2],  
-        ]);         
+        ];         
     }  
 }
 
@@ -2033,13 +2036,13 @@ class UserDto extends Dto
     }
 }
 ```
-Also you can customize what `fromAnything` can be used for the request POST by default
+Also you can customize what `from` or `fromUrl` can be used for the request POST by default
 ```php
 use Bfg\Dto\Dto;
 
 class UserDto extends Dto
 {
-    protected static bool $postDefault = true;
+    protected static string $defaultHttpMethod = 'post';
 
     public function __construct(
         public string $name,

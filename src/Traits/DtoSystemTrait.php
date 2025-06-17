@@ -636,18 +636,18 @@ trait DtoSystemTrait
                     : new $classCollection();
                 if ($value && $namedData) {
                     foreach ($namedData as $item) {
-                        $value->push($class::from($item));
+                        $value->push($class::from($item, $model));
                     }
                 }
             }
         } elseif ($hasArray && is_iterable($namedData)) {
             $value = $allowsNull ? null : [];
             foreach ($namedData as $item) {
-                $value[] = $class::from($item);
+                $value[] = $class::from($item, $model);
             }
         } else {
             $value = $namedData
-                ? ($namedData instanceof DtoCollection ? $class::from($namedData->first()) : $class::from($namedData))
+                ? ($namedData instanceof DtoCollection ? $class::from($namedData->first(), $model) : $class::from($namedData, $model))
                 : null;
         }
 
@@ -804,12 +804,11 @@ trait DtoSystemTrait
     }
 
     /**
-     * @param  array|string|null  $data
      * @return array|string|null
      */
-    protected static function httpData(array|string|null $data): array|string|null
+    protected static function httpData(): array|string|null
     {
-        return $data;
+        return [];
     }
 
     /**

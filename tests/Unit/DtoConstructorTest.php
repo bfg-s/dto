@@ -167,7 +167,7 @@ class DtoConstructorTest extends TestCase
 
     public function test_from_anything()
     {
-        $dto = TestDto::fromAnything([
+        $dto = TestDto::from([
             'name' => 'John Doe',
             'email' => 'test@gmail.com',
             'test' => json_encode([
@@ -178,12 +178,12 @@ class DtoConstructorTest extends TestCase
 
         $this->assertTrue($dto->name === 'John Doe');
 
-        $dto = TestDto::fromAnything('{"name":"John Doe","email":"test@gmail.com","test":{"name":"John Doe","email":"test@gmail.com"}}');
+        $dto = TestDto::from('{"name":"John Doe","email":"test@gmail.com","test":{"name":"John Doe","email":"test@gmail.com"}}');
 
         $this->assertTrue($dto->name === 'John Doe');
         $this->assertTrue($dto->email === 'test@gmail.com');
 
-        $dto = TestDto::fromAnything($dto->toSerialize());
+        $dto = TestDto::from($dto->toSerialize());
 
         $this->assertTrue($dto->name === 'John Doe');
         $this->assertTrue($dto->email === 'test@gmail.com');

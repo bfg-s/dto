@@ -59,22 +59,16 @@ trait DtoCastUsingTrait
                     $methodSuffix = Str::studly(substr($importType['type'], 2));
                     $method = 'from'.$methodSuffix;
                     if (method_exists($this->class, $method)) {
-                        $result = call_user_func([$this->class, $method], $data);
+                        $result = call_user_func([$this->class, $method], $data, $model, $key, $attributes);
                         if ($result instanceof $this->class) {
                             return $result;
                         } else {
-                            throw new \BadMethodCallException(sprintf(
-                                "Method %s in class %s for import type %s must return an instance of %s.",
-                                $method,
-                                $this->class,
-                                $importType['type'],
-                                $this->class
-                            ));
+                            return $this->class::from($result, $model);
                         }
                     }
                 }
 
-                return $this->class::from($data);
+                return $this->class::from($data, $model);
             }
 
             public function set($model, $key, $value, $attributes): array
