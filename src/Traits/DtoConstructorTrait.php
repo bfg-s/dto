@@ -524,6 +524,31 @@ trait DtoConstructorTrait
     }
 
     /**
+     * Create a new instance from an associative array
+     *
+     * @param  mixed|null  $data
+     * @param  \Illuminate\Database\Eloquent\Model|null  $model
+     * @return static
+     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
+     */
+    public static function fromAssoc(mixed $data = null, Model|null $model = null): static
+    {
+        if ($data instanceof Arrayable) {
+            $data = $data->toArray();
+        } elseif (is_iterable($data)) {
+            $data = is_array($data) ? $data : iterator_to_array($data);
+        } else {
+            $data = [];
+        }
+
+        if ($data && !is_assoc($data)) {
+            throw new \InvalidArgumentException('Expected an associative array, got: ' . gettype($data));
+        }
+
+        return static::fromArray($data, $model);
+    }
+
+    /**
      * Dto constructor from empty
      *
      * @param  array<string, mixed>  $data
