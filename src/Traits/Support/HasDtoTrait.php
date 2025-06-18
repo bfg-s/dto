@@ -14,7 +14,7 @@ use Bfg\Dto\Dto;
  * This trait is used to mark classes that are DTOs (Data Transfer Objects).
  *
  * @package Bfg\Dto\Traits\Support
- * @template TDto of Dto<static>
+ * @template TDto of Dto<mixed>
  */
 trait HasDtoTrait
 {
