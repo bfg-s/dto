@@ -5,7 +5,7 @@ namespace Bfg\Dto\Attributes;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY | Attribute::IS_REPEATABLE)]
-class DtoName
+class DtoMapFrom
 {
     public function __construct(
         public string $name,

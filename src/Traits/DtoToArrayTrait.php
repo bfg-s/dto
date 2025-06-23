@@ -8,7 +8,8 @@ use Bfg\Dto\Attributes\DtoFromCache;
 use Bfg\Dto\Attributes\DtoFromConfig;
 use Bfg\Dto\Attributes\DtoFromRequest;
 use Bfg\Dto\Attributes\DtoFromRoute;
-use Bfg\Dto\Attributes\DtoName;
+use Bfg\Dto\Attributes\DtoMapFrom;
+use Bfg\Dto\Attributes\DtoMapTo;
 use Bfg\Dto\Attributes\DtoToResource;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
@@ -73,7 +74,7 @@ trait DtoToArrayTrait
                 }
             }
             if (! $resource && ! static::$__strictToArray) {
-                $attributes = $parameter->getAttributes(DtoName::class);
+                $attributes = $parameter->getAttributes(DtoMapTo::class);
                 foreach ($attributes as $attribute) {
                     $instance = $attribute->newInstance();
                     $key = $instance->name;
@@ -98,7 +99,7 @@ trait DtoToArrayTrait
             }
 
             if ($foreign) {
-                if (! array_key_exists($key, $originals)) {
+                if (data_get($originals, $key, '__NOT_FOUND') === '__NOT_FOUND') {
                     continue;
                 }
             }
@@ -174,7 +175,7 @@ trait DtoToArrayTrait
                 }
             }
             if (! $resource && ! static::$__strictToArray) {
-                $attributes = $property->getAttributes(DtoName::class);
+                $attributes = $property->getAttributes(DtoMapTo::class);
                 foreach ($attributes as $attribute) {
                     $instance = $attribute->newInstance();
                     if ($instance->from === $key) {
@@ -225,7 +226,7 @@ trait DtoToArrayTrait
             }
 
             if ($foreign) {
-                if (! array_key_exists($key, $originals)) {
+                if (data_get($originals, $key, '__NOT_FOUND') === '__NOT_FOUND') {
                     continue;
                 }
             }

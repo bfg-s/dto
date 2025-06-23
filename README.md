@@ -60,7 +60,7 @@ php artisan make:dto UserDto
 * [Attributes](#attributes)
     * [DtoItem](#dtoitem)
     * [DtoCast](#dtocast)
-    * [DtoName](#dtoname)
+    * [DtoMapFrom](#dtomapfrom)
     * [DtoFromConfig](#dtofromconfig)
     * [DtoFromRequest](#dtofromrequest)
     * [DtoFromRoute](#dtofromroute)
@@ -128,7 +128,7 @@ The package provides a variety of methods for creating DTOs (Data Transfer Objec
 The package supports nested DTOs with typing, which makes it easy to work with complex data, such as addresses or comments in the user example. This simplifies data processing in cases with dependencies between objects.
 
 #### Rich customization of properties
-Support for data casting, such as datetime, bool, as well as property extension through methods and attributes, such as DtoName, DtoFromConfig, DtoFromRequest are useful and powerful tools that make DTOs even more versatile.
+Support for data casting, such as datetime, bool, as well as property extension through methods and attributes, such as DtoMapFrom, DtoFromConfig, DtoFromRequest are useful and powerful tools that make DTOs even more versatile.
 
 #### Diving into events
 The ability to handle various events (creating, created, mutating and others) provides greater flexibility in managing the state of the DTO. This can be useful for implementing validation logic or transforming data before or after it is used.
@@ -425,17 +425,18 @@ You can use binding for the DTO.
 
 #### Binding to the model
 You can bind the DTO property to the model.
+
 ```php
 use Bfg\Dto\Dto;
 use App\Models\User;
-use Bfg\Dto\Attributes\DtoName;
+use Bfg\Dto\Attributes\DtoMapFrom;
 
 class UserDto extends Dto
 {
     public function __construct(
         public string $name,
         public string $email,
-        #[DtoName('user_id')] 
+        #[DtoMapFrom('user_id')] 
         public ?User $user,
     ) {}
 }
@@ -989,17 +990,17 @@ class UserContactDto extends Dto
 }
 ```
 
-#### DtoName
-You can use the `DtoName` attribute to add the name of the DTO.
+#### DtoMapFrom
+You can use the `DtoMapFrom` attribute to add the name of the DTO.
 ```php
 use Bfg\Dto\Dto;
 
 class UserDto extends Dto
 {            
     public function __construct(
-        #[DtoName('user')] 
+        #[DtoMapFrom('user')] 
         public string $name,
-        #[DtoName('contacts.email')] 
+        #[DtoMapFrom('contacts.email'), DtoMapTo('contacts.email')] 
         public string $email,
         public ?string $password,
     ) {}
@@ -1029,7 +1030,7 @@ use Bfg\Dto\Dto;
 
 class UserDto extends Dto
 {            
-    #[DtoName('user', 'name')]
+    #[DtoMapFrom('user', 'name')]
     protected static array $extends = [
         'name' => 'string',
     ];

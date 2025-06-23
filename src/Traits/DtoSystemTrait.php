@@ -10,7 +10,7 @@ use Bfg\Dto\Attributes\DtoFromConfig;
 use Bfg\Dto\Attributes\DtoFromRequest;
 use Bfg\Dto\Attributes\DtoFromRoute;
 use Bfg\Dto\Attributes\DtoItem;
-use Bfg\Dto\Attributes\DtoName;
+use Bfg\Dto\Attributes\DtoMapFrom;
 use Bfg\Dto\Collections\DtoCollection;
 use Bfg\Dto\Dto;
 use Bfg\Dto\Exceptions\DtoExtensionTypeNotFoundException;
@@ -382,7 +382,7 @@ trait DtoSystemTrait
         $notFoundKeys = [];
         $isOtherParam = false;
         $nameInData = $parameter->getName();
-        $attributes = $parameter->getAttributes(DtoName::class);
+        $attributes = $parameter->getAttributes(DtoMapFrom::class);
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
             $nev = '___NO_EXISTS_VALUE___';
@@ -437,7 +437,7 @@ trait DtoSystemTrait
         $notFoundKeys = [];
         $isOtherParam = false;
         $key = $nameInData;
-        $attributes = $property->getAttributes(DtoName::class);
+        $attributes = $property->getAttributes(DtoMapFrom::class);
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
             if ($instance->from === $key) {
