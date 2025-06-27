@@ -46,6 +46,8 @@ trait DtoConstructorTrait
             return static::fromCallable($item, $model);
         } elseif (is_resource($item)) {
             return static::fromResource($item, $model);
+        } elseif (is_numeric($item)) {
+            return static::fromNumeric($item, $model);
         }
 
         return static::new($item, __model: $model);
@@ -166,7 +168,7 @@ trait DtoConstructorTrait
         } else {
             $return = static::fromEmpty(model: $model);
         }
-        call_user_func([$return, 'setImportType'], 'url', $url);
+        $return::setImportType('url', $url, instance: $return);
         return $return;
     }
 
@@ -414,11 +416,11 @@ trait DtoConstructorTrait
         if ($dto instanceof Dto || $dto instanceof DtoCollection) {
             static::$__models[static::class][spl_object_id($dto)] = $model;
             $dto->log('createdFromSerialize', ms: static::endTime($start));
+            $dto::setImportType('serializeDto', $serialize, instance: $dto);
             $return = $dto;
-            call_user_func([$return, 'setImportType'], 'serializeDto', $serialize);
         } else {
             $return = static::from($dto, $model);
-            call_user_func([$return, 'setImportType'], 'serializeAny', $serialize);
+            $return::setImportType('serializeAny', $serialize, instance: $return);
         }
         return $return;
     }
@@ -445,7 +447,7 @@ trait DtoConstructorTrait
             $dto->log('createdFromJson', [], ms: static::endTime($start));
             $return = $dto;
         }
-        call_user_func([$return, 'setImportType'], 'json', $json);
+        $return::setImportType('json', $json, instance: $return);
         return $return;
     }
 
@@ -667,7 +669,9 @@ trait DtoConstructorTrait
     {
         if ($separator !== null) {
             $data = explode($separator, $string);
-            return static::new(...$data, __model: $model);
+            $dto = static::new(...$data, __model: $model);
+            $dto::setImportType('string', $string, args: compact('separator'), instance: $dto);
+            return $dto;
         }
 
         if (static::isJson($string)) {
@@ -679,8 +683,25 @@ trait DtoConstructorTrait
         } elseif (filter_var($string, FILTER_VALIDATE_URL) !== false) {
             return static::fromUrl($string, $model);
         }
+
         $string = explode('|', $string);
-        return static::new(...$string, __model: $model);
+        $dto = static::new(...$string, __model: $model);
+        $dto::setImportType('string', $string, args: ['separator' => '|'], instance: $dto);
+        return $dto;
+    }
+
+    /**
+     * Make an instance from a numeric value
+     *
+     * @param  int|float|string  $numeric
+     * @param  \Illuminate\Database\Eloquent\Model|null  $model
+     * @return static
+     */
+    public static function fromNumeric(int|float|string $numeric, Model|null $model = null): static
+    {
+        $dto = static::new($numeric, __model: $model);
+        $dto::setImportType('numeric', $numeric, instance: $dto);
+        return $dto;
     }
 
     /**

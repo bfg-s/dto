@@ -32,23 +32,37 @@ trait DtoCollectionMethodsTrait
      *
      * @param  string  $type
      * @param  mixed|null  $source
+     * @param  \Bfg\Dto\Collections\DtoCollection|null  $instance
      * @return void
      */
-    public function setImportType(string $type, mixed $source = null): void
+    public static function setImportType(string $type, mixed $source = null, DtoCollection|null $instance = null): void
     {
-        if (! isset(static::$__importType[static::class])) {
-            static::$__importType[static::class] = compact('type', 'source');
+        static::$__importType[static::class] = compact('type', 'source', 'instance');
+        if ($instance) {
+            $instanceId = spl_object_id($instance);
+            static::$__importType[$instanceId] = static::$__importType[static::class];
         }
     }
 
     /**
      * Get an import type for the DTO
      *
-     * @return array|null
+     * @param  \Bfg\Dto\Collections\DtoCollection|null  $instance
+     * @return array
      */
-    public function getImportType(): array|null
+    public static function getImportType(DtoCollection|null $instance = null): array
     {
-        return static::$__importType[static::class][spl_object_id($this)] ?? null;
+        if ($instance) {
+            $instanceId = spl_object_id($instance);
+            if (isset(static::$__importType[$instanceId])) {
+                return static::$__importType[$instanceId];
+            }
+        }
+        return static::$__importType[static::class] ?? [
+            'type' => 'json',
+            'source' => null,
+            'instance' => $instance ?? null,
+        ];
     }
 
     /**
@@ -68,7 +82,7 @@ trait DtoCollectionMethodsTrait
             } else {
                 $data[$key] = $dto;
             }
-            if (is_json($data[$key])) {
+            if (Dto::isJson($data[$key])) {
                 $data[$key] = json_decode($data[$key], true, 512, JSON_THROW_ON_ERROR);
             }
         }

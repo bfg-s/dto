@@ -8,6 +8,7 @@ use Bfg\Dto\Attributes\DtoFromCache;
 use Bfg\Dto\Attributes\DtoFromConfig;
 use Bfg\Dto\Attributes\DtoFromRequest;
 use Bfg\Dto\Attributes\DtoFromRoute;
+use Bfg\Dto\Attributes\DtoMapApi;
 use Bfg\Dto\Attributes\DtoMapFrom;
 use Bfg\Dto\Attributes\DtoMapTo;
 use Bfg\Dto\Attributes\DtoToResource;
@@ -52,6 +53,7 @@ trait DtoToArrayTrait
         ];
         $originals = $this->originals();
         $keysOnly = static::$__requestKeys[static::class][spl_object_id($this)] ?? [];
+        $paramNames = [];
 
         foreach ($parameters as $parameter) {
             $key = $parameter->getName();
@@ -61,6 +63,7 @@ trait DtoToArrayTrait
             if ($keysOnly && ! in_array($key, $keysOnly)) {
                 continue;
             }
+            $paramNames[] = $key;
             $value = $this->{$key} ?? null;
             $resource = null;
             $foreign = false;
@@ -73,11 +76,16 @@ trait DtoToArrayTrait
                     }
                 }
             }
-            if (! $resource && ! static::$__strictToArray) {
+            if (! static::$__strictToArray) {
                 $attributes = $parameter->getAttributes(DtoMapTo::class);
                 foreach ($attributes as $attribute) {
                     $instance = $attribute->newInstance();
                     $key = $instance->name;
+                    break;
+                }
+                $attributes = $parameter->getAttributes(DtoMapApi::class);
+                foreach ($attributes as $attribute) {
+                    $key = Str::snake($key);
                     break;
                 }
             }
@@ -142,6 +150,7 @@ trait DtoToArrayTrait
             if ($keysOnly && ! in_array($key, $keysOnly)) {
                 continue;
             }
+            $paramNames[] = $key;
             $foreign = false;
             $resource = null;
             $value = static::$__parameters[static::class][spl_object_id($this)][$key] ?? null;
@@ -181,6 +190,16 @@ trait DtoToArrayTrait
                     if ($instance->from === $key) {
                         $key = $instance->name;
                         break;
+                    }
+                }
+                $attributes = $property->getAttributes(DtoMapApi::class);
+                foreach ($attributes as $attribute) {
+                    $instance = $attribute->newInstance();
+                    if ($instance instanceof DtoMapApi) {
+                        if (! $instance->from || $instance->from === $key) {
+                            $key = Str::snake($key);
+                            break;
+                        }
                     }
                 }
             }
@@ -240,7 +259,7 @@ trait DtoToArrayTrait
 
         // Dynamically add extends properties
         foreach (get_object_vars($this) as $key => $value) {
-            if (! isset($result[$key])) {
+            if (! isset($result[$key]) && ! in_array($key, $paramNames)) {
                 if (in_array($key, static::$hidden) && ! static::$__strictToArray) {
                     continue;
                 }

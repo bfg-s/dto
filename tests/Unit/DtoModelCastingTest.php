@@ -3,10 +3,12 @@
 namespace Bfg\Dto\Tests\Unit;
 
 use Bfg\Dto\Collections\DtoCollection;
+use Bfg\Dto\Tests\Test3Dto;
 use Bfg\Dto\Tests\TestDto;
 use Bfg\Dto\Tests\User2Model;
 use Bfg\Dto\Tests\User3Model;
 use Bfg\Dto\Tests\User4Model;
+use Bfg\Dto\Tests\User5Model;
 use Bfg\Dto\Tests\UserModel;
 use PHPUnit\Framework\TestCase;
 
@@ -14,7 +16,9 @@ include_once __DIR__.'/../UserModel.php';
 include_once __DIR__.'/../User2Model.php';
 include_once __DIR__.'/../User3Model.php';
 include_once __DIR__.'/../User4Model.php';
+include_once __DIR__.'/../User5Model.php';
 include_once __DIR__.'/../TestDto.php';
+include_once __DIR__.'/../Test3Dto.php';
 
 class DtoModelCastingTest extends TestCase
 {
@@ -148,5 +152,26 @@ class DtoModelCastingTest extends TestCase
         $method->invoke($user);
         $this->assertTrue(str_contains($user->syncOriginal()->getRawOriginal('test4'), '"number":13'));
         $this->assertTrue(str_contains($user->syncOriginal()->getRawOriginal('test4'), 'Changed Name'));
+    }
+
+    public function test_iterable_array_model_casting(): void
+    {
+        $user = new User5Model();
+
+        $user->setRawAttributes([
+            'test5' => json_encode([1,2,'John Doe',3,4])
+        ]);
+
+        $this->assertInstanceOf(DtoCollection::class, $user->test5);
+        $this->assertTrue($user->test5->isNotEmpty());
+        $this->assertInstanceOf(Test3Dto::class, $user->test5->first());
+        $this->assertTrue($user->test5->get(1)->name === 2);
+        $this->assertTrue($user->test5->get(2)->name === 'John Doe');
+
+        $refUser = new \ReflectionClass($user);
+        $method = $refUser->getMethod('mergeAttributesFromCachedCasts');
+        $method->setAccessible(true);
+        $method->invoke($user);
+        $this->assertTrue($user->syncOriginal()->getRawOriginal('test5') === '[1,2,"John Doe",3,4]');
     }
 }

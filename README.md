@@ -61,6 +61,8 @@ php artisan make:dto UserDto
     * [DtoItem](#dtoitem)
     * [DtoCast](#dtocast)
     * [DtoMapFrom](#dtomapfrom)
+    * [DtoMapTo]()
+    * [DtoMapApi]()
     * [DtoFromConfig](#dtofromconfig)
     * [DtoFromRequest](#dtofromrequest)
     * [DtoFromRoute](#dtofromroute)

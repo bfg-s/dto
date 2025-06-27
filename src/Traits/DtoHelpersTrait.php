@@ -322,6 +322,24 @@ trait DtoHelpersTrait
     }
 
     /**
+     * Get first dto parameter value
+     *
+     * @return mixed
+     */
+    public function first(): mixed
+    {
+        $parameters = static::getConstructorParameters();
+        if (count($parameters) > 0) {
+            $firstParameter = $parameters[array_key_first($parameters)];
+            $name = $firstParameter->getName();
+        } elseif (count(static::$extends) > 0) {
+            $name = array_key_first(static::$extends);
+        }
+
+        return isset($name) ? $this->get($name) : null;
+    }
+
+    /**
      * Comparison of DTO objects
      *
      * @param  \Bfg\Dto\Dto  $dto

@@ -12,12 +12,13 @@ trait DtoToImportTrait
      * Convert an object to the format string from which the object was created.
      * Used for storing in a database.
      *
-     * @return string|null
+     * @return int|float|string|null
      */
-    public function toImport(): string|null
+    public function toImport(): int|float|string|null
     {
-        $importType = static::getImportType();
+        $importType = static::getImportType($this);
         $type = data_get($importType, 'type');
+        $args = data_get($importType, 'args', []);
         if (isset($importType['manual']) && $importType['manual']) {
             $method = (str_starts_with($type, 'to') ? '' : 'to') . Str::studly($type);
             if (method_exists($this, $method)) {
@@ -47,6 +48,10 @@ trait DtoToImportTrait
             return $this->toSerialize();
         } else if ($type === 'serializeAny') {
             return serialize($this->toArray());
+        } elseif ($type === 'string') {
+            return (string) $this->toString(...$args);
+        } elseif ($type === 'numeric') {
+            return $this->toNumeric();
         } else {
             return $this->toJson(JSON_UNESCAPED_UNICODE);
         }

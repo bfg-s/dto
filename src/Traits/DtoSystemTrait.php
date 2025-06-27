@@ -10,6 +10,7 @@ use Bfg\Dto\Attributes\DtoFromConfig;
 use Bfg\Dto\Attributes\DtoFromRequest;
 use Bfg\Dto\Attributes\DtoFromRoute;
 use Bfg\Dto\Attributes\DtoItem;
+use Bfg\Dto\Attributes\DtoMapApi;
 use Bfg\Dto\Attributes\DtoMapFrom;
 use Bfg\Dto\Collections\DtoCollection;
 use Bfg\Dto\Dto;
@@ -37,11 +38,23 @@ trait DtoSystemTrait
      * @param  mixed|null  $source
      * @param  bool  $manual
      * @param  array  $args
+     * @param  \Bfg\Dto\Dto|null  $instance
      * @return void
      */
-    public static function setImportType(string $type, mixed $source = null, bool $manual = false, array $args = []): void
-    {
-        static::$__importType[static::class] = compact('type', 'source', 'manual', 'args');
+    public static function setImportType(
+        string $type,
+        mixed $source = null,
+        bool $manual = false,
+        array $args = [],
+        Dto|null $instance = null,
+    ): void {
+        static::$__importType[static::class]
+            = compact('type', 'source', 'manual', 'args', 'instance');
+        if ($instance) {
+            $instanceId = spl_object_id($instance);
+            static::$__importType[$instanceId]
+                = static::$__importType[static::class];
+        }
     }
 
     /**
@@ -49,14 +62,24 @@ trait DtoSystemTrait
      *
      * @return array{type: string, source: mixed|null, manual: bool, args: array<string, mixed>}
      */
-    public static function getImportType(): array
+    public static function getImportType(Dto|null $instance = null): array
     {
-        return static::$__importType[static::class] ?? [
+        $instanceId = $instance ? spl_object_id($instance) : null;
+
+        if (
+            $instanceId
+            && isset(static::$__importType[$instanceId])
+        ) {
+            return static::$__importType[$instanceId];
+        }
+
+        return (static::$__importType[static::class] ?? [
             'type' => 'json',
             'source' => null,
             'manual' => false,
             'args' => [],
-        ];
+            'instance' => $instance,
+        ]);
     }
 
     /**
@@ -393,6 +416,13 @@ trait DtoSystemTrait
                 $notFoundKeys[] = $instance->name;
             }
         }
+        $attributes = $parameter->getAttributes(DtoMapApi::class);
+        foreach ($attributes as $attribute) {
+            $instance = $attribute->newInstance();
+            if ($instance instanceof DtoMapApi) {
+                $nameInData = Str::snake($nameInData);
+            }
+        }
         $attributes = $parameter->getAttributes(DtoFromRoute::class);
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
@@ -703,7 +733,7 @@ trait DtoSystemTrait
         return null;
     }
 
-    protected static function isJson(string $data): bool
+    public static function isJson(string $data): bool
     {
         $data = trim($data);
 
@@ -713,7 +743,7 @@ trait DtoSystemTrait
         return !! preg_match('/^(?:\{.*}|\[.*])$/s', $data);
     }
 
-    protected static function isSerialize(string $data): bool
+    public static function isSerialize(string $data): bool
     {
         $data = trim($data);
 
