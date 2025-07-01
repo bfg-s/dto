@@ -597,12 +597,15 @@ trait DtoConstructorTrait
                 }
             }
 
+            $methodByDefault = 'default' . Str::studly($name);
+            $methodByDefaultExists = method_exists(static::class, $methodByDefault);
+
             $allData = [
-                $name => $parameter->isDefaultValueAvailable()
+                $name => $methodByDefaultExists ? null : ($parameter->isDefaultValueAvailable()
                     ? $parameter->getDefaultValue()
                     : (!$type->allowsNull()
                         ? static::makeValueByType($type->getName(), $types)
-                        : null),
+                        : null)),
                 ...$data
             ];
 
@@ -617,12 +620,8 @@ trait DtoConstructorTrait
                 }
             }
 
-            if ($value === null) {
-                $methodByDefault = 'default' . Str::studly($name);
-                if (method_exists(static::class, $methodByDefault)) {
-                    $value = static::$methodByDefault($data);
-                }
-            }
+            $value = $value === null && $methodByDefaultExists
+                ? static::$methodByDefault($data) : $value;
 
             $arguments[$name] = $value;
         }
@@ -634,17 +633,14 @@ trait DtoConstructorTrait
         foreach (static::$extends as $key => $types) {
             $types = is_array($types) ? $types : explode('|', $types);
             $type = $types[0];
-            [$key, $value] = static::createNameValueFromExtendedProperty($key, $types, [
-                $key => in_array('null', $types) ? null : static::makeValueByType($type, $types)
-            ]);
-
-            if ($value === null) {
-                $methodByDefault = 'default' . Str::studly($key);
-                if (method_exists(static::class, $methodByDefault)) {
-                    $value = static::$methodByDefault($data);
-                }
-            }
-
+            $methodByDefault = 'default' . Str::studly($key);
+            $allData = [
+                $key => in_array('null', $types) || method_exists(static::class, $methodByDefault)
+                    ? null
+                    : static::makeValueByType($type, $types),
+                ...$data,
+            ];
+            [$key, $value] = static::createNameValueFromExtendedProperty($key, $types, $allData);
             static::$__parameters[static::class][spl_object_id($dto)][$key] = $value;
         }
 

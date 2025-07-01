@@ -121,14 +121,6 @@ trait DtoSystemTrait
         foreach ($constructorParameters as $parameter) {
 
             [$name, $value] = static::createNameValueFromProperty($parameter, $data, $model);
-
-            if ($value === null) {
-                $methodByDefault = 'default' . Str::studly($name);
-                if (method_exists(static::class, $methodByDefault)) {
-                    $value = static::$methodByDefault($data);
-                }
-            }
-
             $arguments[$name] = $value;
             $created[$name] = $name;
         }
@@ -142,14 +134,6 @@ trait DtoSystemTrait
             $types = is_array($types) ? $types : explode('|', $types);
 
             [$name, $value] = static::createNameValueFromExtendedProperty($key, $types, $data, $model);
-
-            if ($value === null) {
-                $methodByDefault = 'default' . Str::studly($name);
-                if (method_exists(static::class, $methodByDefault)) {
-                    $value = static::$methodByDefault($data);
-                }
-            }
-
             $arguments[$name] = $value;
         }
 
@@ -260,6 +244,13 @@ trait DtoSystemTrait
                 : null;
         }
 
+        if ($value === null) {
+            $methodByDefault = 'default' . Str::studly($key);
+            if (method_exists(static::class, $methodByDefault)) {
+                $value = static::$methodByDefault($data);
+            }
+        }
+
         if (! $isNullable && $value === null) {
             throw new DtoUndefinedArrayKeyException($nameInData . ($notFoundKeys ? ', ' . implode(', ', $notFoundKeys) : ''));
         }
@@ -294,25 +285,9 @@ trait DtoSystemTrait
 
         if ($model) {
             if (! $valueInDataExists) {
-
                 $data[$parameter->getName()] = data_get($model, $nameInData);
                 $valueInDataExists = true;
             }
-        }
-
-        $methodDefault = 'default' . Str::studly($name);
-        if (
-            $type->isBuiltin()
-            && (
-                ! $valueInDataExists
-                && ! $parameter->isDefaultValueAvailable()
-            )
-            && ! $type->allowsNull()
-            && ! method_exists(static::class, $methodDefault)
-        ) {
-            throw new DtoUndefinedArrayKeyException(
-                $nameInData . ($notFoundKeys ? ', ' . implode(', ', $notFoundKeys) : '')
-            );
         }
 
         if (! $type->isBuiltin() && ! $isOtherParam) {
@@ -337,6 +312,25 @@ trait DtoSystemTrait
             $value = $valueInDataExists
                 ? data_get($data, $nameInData)
                 : ($parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null);
+        }
+        if ($value === null) {
+            $methodByDefault = 'default' . Str::studly($name);
+            if (method_exists(static::class, $methodByDefault)) {
+                $value = static::$methodByDefault($data);
+            }
+        }
+        if (
+            $type->isBuiltin()
+            && (
+                ! $valueInDataExists
+                && ! $parameter->isDefaultValueAvailable()
+            )
+            && ! $type->allowsNull()
+            && $value === null
+        ) {
+            throw new DtoUndefinedArrayKeyException(
+                $nameInData . ($notFoundKeys ? ', ' . implode(', ', $notFoundKeys) : '')
+            );
         }
         $value = static::fireEvent(['created', $name], $value, static::SET_CURRENT_DATA, $data, $parameter);
         $value = static::transformAttribute($name, $value);
