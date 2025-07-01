@@ -7,8 +7,8 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 
-define("DATA_EXISTS_IGNORE_VALUE_COMPARE", sha1('__IGNORE_VALUE_COMPARE__'));
-define("DATA_EXISTS_NOT_FOUND_FLAG", sha1('__NOT_FOUND_FLAG__'));
+define("DTO_DATA_EXISTS_IGNORE_VALUE_COMPARE", sha1('__IGNORE_VALUE_COMPARE__'));
+define("DTO_DATA_EXISTS_NOT_FOUND_FLAG", sha1('__NOT_FOUND_FLAG__'));
 
 if (!function_exists('dto_data_exists')) {
     /**
@@ -24,7 +24,7 @@ if (!function_exists('dto_data_exists')) {
         array|object $target,
         string $key,
         string $type = 'mixed',
-        mixed $needValue = DATA_EXISTS_IGNORE_VALUE_COMPARE
+        mixed $needValue = DTO_DATA_EXISTS_IGNORE_VALUE_COMPARE
     ): bool {
         $target = $target instanceof Arrayable ? $target->toArray() : $target;
         $target = is_object($target) ? get_object_vars($target) : $target;
@@ -35,7 +35,7 @@ if (!function_exists('dto_data_exists')) {
         foreach ($targetDot as $targetKey => $targetValue) {
             if (
                 Str::is($key, $targetKey)
-                && ($needValue === DATA_EXISTS_IGNORE_VALUE_COMPARE
+                && ($needValue === DTO_DATA_EXISTS_IGNORE_VALUE_COMPARE
                     || json_encode($targetValue) === json_encode($needValue))
             ) {
                 $trues[] = $types->contains('mixed')
@@ -44,11 +44,11 @@ if (!function_exists('dto_data_exists')) {
         }
 
         if (count($trues) === 0) {
-            $targetValue = data_get($target, $key, DATA_EXISTS_NOT_FOUND_FLAG);
-            if ($targetValue !== DATA_EXISTS_NOT_FOUND_FLAG) {
+            $targetValue = data_get($target, $key, DTO_DATA_EXISTS_NOT_FOUND_FLAG);
+            if ($targetValue !== DTO_DATA_EXISTS_NOT_FOUND_FLAG) {
                 $trues[] = $types->contains('mixed')
                     || $types->contains(get_debug_type($targetValue))
-                    || ($needValue === DATA_EXISTS_IGNORE_VALUE_COMPARE
+                    || ($needValue === DTO_DATA_EXISTS_IGNORE_VALUE_COMPARE
                         || json_encode($targetValue) === json_encode($needValue));
             }
         }
