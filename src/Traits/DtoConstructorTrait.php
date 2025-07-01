@@ -620,7 +620,7 @@ trait DtoConstructorTrait
             if ($value === null) {
                 $methodByDefault = 'default' . Str::studly($name);
                 if (method_exists(static::class, $methodByDefault)) {
-                    $value = static::$methodByDefault();
+                    $value = static::$methodByDefault($data);
                 }
             }
 
@@ -641,7 +641,7 @@ trait DtoConstructorTrait
             if ($value === null) {
                 $methodByDefault = 'default' . Str::studly($key);
                 if (method_exists(static::class, $methodByDefault)) {
-                    $value = static::$methodByDefault();
+                    $value = static::$methodByDefault($data);
                 }
             }
 

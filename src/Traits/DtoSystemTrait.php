@@ -125,7 +125,7 @@ trait DtoSystemTrait
             if ($value === null) {
                 $methodByDefault = 'default' . Str::studly($name);
                 if (method_exists(static::class, $methodByDefault)) {
-                    $value = static::$methodByDefault();
+                    $value = static::$methodByDefault($data);
                 }
             }
 
@@ -146,7 +146,7 @@ trait DtoSystemTrait
             if ($value === null) {
                 $methodByDefault = 'default' . Str::studly($name);
                 if (method_exists(static::class, $methodByDefault)) {
-                    $value = static::$methodByDefault();
+                    $value = static::$methodByDefault($data);
                 }
             }
 
@@ -291,7 +291,7 @@ trait DtoSystemTrait
         [$type, $hasCollection, $hasArray] = static::detectType($type);
         [$nameInData, $notFoundKeys, $isOtherParam, $data] = static::detectAttributes($data, $parameter);
         $valueInDataExists = dto_data_exists($data, $nameInData);
-        //dump($name, $valueInDataExists);
+
         if ($model) {
             if (! $valueInDataExists) {
 
