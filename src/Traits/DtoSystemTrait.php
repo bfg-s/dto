@@ -123,7 +123,7 @@ trait DtoSystemTrait
             [$name, $value] = static::createNameValueFromProperty($parameter, $data, $model);
 
             if ($value === null) {
-                $methodByDefault = 'default' . ucfirst(Str::camel($name));
+                $methodByDefault = 'default' . Str::studly($name);
                 if (method_exists(static::class, $methodByDefault)) {
                     $value = static::$methodByDefault();
                 }
@@ -144,7 +144,7 @@ trait DtoSystemTrait
             [$name, $value] = static::createNameValueFromExtendedProperty($key, $types, $data, $model);
 
             if ($value === null) {
-                $methodByDefault = 'default' . ucfirst(Str::camel($name));
+                $methodByDefault = 'default' . Str::studly($name);
                 if (method_exists(static::class, $methodByDefault)) {
                     $value = static::$methodByDefault();
                 }
@@ -233,15 +233,11 @@ trait DtoSystemTrait
         $hasCollection = in_array(DtoCollection::class, $types);
         $hasArray = in_array('array', $types);
 
-
         [$nameInData, $notFoundKeys, $isOtherParam, $data] = static::detectAttributesForExtended($data, $key);
-
-        $nev = '___NO_EXISTS_VALUE___';
-        $valueInDataExists = data_get($data, $nameInData, $nev) !== $nev;
+        $valueInDataExists = dto_data_exists($data, $nameInData);
 
         if ($model) {
             if (! $valueInDataExists) {
-
                 $data[$key] = data_get($model, $nameInData);
                 $valueInDataExists = true;
             }
@@ -294,8 +290,8 @@ trait DtoSystemTrait
 
         [$type, $hasCollection, $hasArray] = static::detectType($type);
         [$nameInData, $notFoundKeys, $isOtherParam, $data] = static::detectAttributes($data, $parameter);
-        $nev = '___NO_EXISTS_VALUE___';
-        $valueInDataExists = data_get($data, $nameInData, $nev) !== $nev;
+        $valueInDataExists = dto_data_exists($data, $nameInData);
+        //dump($name, $valueInDataExists);
         if ($model) {
             if (! $valueInDataExists) {
 
@@ -304,7 +300,7 @@ trait DtoSystemTrait
             }
         }
 
-        $methodDefault = 'default' . ucfirst(Str::camel($name));
+        $methodDefault = 'default' . Str::studly($name);
         if (
             $type->isBuiltin()
             && (
@@ -408,8 +404,7 @@ trait DtoSystemTrait
         $attributes = $parameter->getAttributes(DtoMapFrom::class);
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
-            $nev = '___NO_EXISTS_VALUE___';
-            $valueInDataExists = data_get($data, $instance->name, $nev) !== $nev;
+            $valueInDataExists = dto_data_exists($data, $instance->name);
             if ($valueInDataExists) {
                 $nameInData = $instance->name;
             } else {
@@ -539,8 +534,7 @@ trait DtoSystemTrait
         array $data,
         string|null $dtoModel = null,
     ): mixed {
-        $nev = '___NO_EXISTS_VALUE___';
-        $valueInDataExists = data_get($data, $nameInData, $nev) !== $nev;
+        $valueInDataExists = dto_data_exists($data, $nameInData);
         $dataValue = data_get($data, $nameInData);
 
         if (! is_subclass_of($class, Carbon::class) && $class !== Carbon::class) {
@@ -645,10 +639,7 @@ trait DtoSystemTrait
         $classCollection = is_subclass_of($classCollection, DtoCollection::class) || $class === DtoCollection::class
             ? $classCollection
             : DtoCollection::class;
-
-        $nev = '___NO_EXISTS_VALUE___';
-        $valueInDataExists = data_get($data, $nameInData, $nev) !== $nev;
-
+        $valueInDataExists = dto_data_exists($data, $nameInData);
         $namedData = $valueInDataExists
             ? data_get($data, $nameInData)
             : ($model ? data_get($model, $nameInData) : null);

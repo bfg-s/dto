@@ -137,7 +137,6 @@ class DtoToTest extends TestCase
         TestDto::clearGlobalEvents();
 
         $dtoGeneral = TestDto::fromArray($array);
-
-        $this->assertTrue((string)$dtoGeneral === json_encode($array));
+        $this->assertTrue($dtoGeneral->toJson() === json_encode($array));
     }
 }

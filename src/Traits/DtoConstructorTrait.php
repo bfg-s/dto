@@ -618,7 +618,7 @@ trait DtoConstructorTrait
             }
 
             if ($value === null) {
-                $methodByDefault = 'default'.ucfirst(Str::camel($name));
+                $methodByDefault = 'default' . Str::studly($name);
                 if (method_exists(static::class, $methodByDefault)) {
                     $value = static::$methodByDefault();
                 }
@@ -639,7 +639,7 @@ trait DtoConstructorTrait
             ]);
 
             if ($value === null) {
-                $methodByDefault = 'default'.ucfirst(Str::camel($key));
+                $methodByDefault = 'default' . Str::studly($key);
                 if (method_exists(static::class, $methodByDefault)) {
                     $value = static::$methodByDefault();
                 }

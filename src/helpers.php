@@ -3,6 +3,59 @@
 use Bfg\Dto\Dto;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\Str;
+use Illuminate\Support\Arr;
+
+define("DATA_EXISTS_IGNORE_VALUE_COMPARE", sha1('__IGNORE_VALUE_COMPARE__'));
+define("DATA_EXISTS_NOT_FOUND_FLAG", sha1('__NOT_FOUND_FLAG__'));
+
+if (!function_exists('dto_data_exists')) {
+    /**
+     * Check if a key exists in an array or object, with optional type and value comparison.
+     *
+     * @param  array|object  $target
+     * @param  string  $key
+     * @param  string  $type
+     * @param  mixed  $needValue
+     * @return bool
+     */
+    function dto_data_exists(
+        array|object $target,
+        string $key,
+        string $type = 'mixed',
+        mixed $needValue = DATA_EXISTS_IGNORE_VALUE_COMPARE
+    ): bool {
+        $target = $target instanceof Arrayable ? $target->toArray() : $target;
+        $target = is_object($target) ? get_object_vars($target) : $target;
+        $targetDot = Arr::dot($target);
+        $types = Str::of($type)->lower()->replace(['.',',',';'], '|')->explode('|');
+        $trues = [];
+
+        foreach ($targetDot as $targetKey => $targetValue) {
+            if (
+                Str::is($key, $targetKey)
+                && ($needValue === DATA_EXISTS_IGNORE_VALUE_COMPARE
+                    || json_encode($targetValue) === json_encode($needValue))
+            ) {
+                $trues[] = $types->contains('mixed')
+                    || $types->contains(get_debug_type($targetValue));
+            }
+        }
+
+        if (count($trues) === 0) {
+            $targetValue = data_get($target, $key, DATA_EXISTS_NOT_FOUND_FLAG);
+            if ($targetValue !== DATA_EXISTS_NOT_FOUND_FLAG) {
+                $trues[] = $types->contains('mixed')
+                    || $types->contains(get_debug_type($targetValue))
+                    || ($needValue === DATA_EXISTS_IGNORE_VALUE_COMPARE
+                        || json_encode($targetValue) === json_encode($needValue));
+            }
+        }
+
+        return count($trues) > 0 && ! in_array(false, $trues, true);
+    }
+}
 
 if (!function_exists('enum_value')) {
     /**
