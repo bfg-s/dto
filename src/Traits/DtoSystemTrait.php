@@ -125,6 +125,8 @@ trait DtoSystemTrait
             $created[$name] = $name;
         }
 
+        dump($arguments);
+
         foreach (static::$extends as $key => $types) {
 
             if (array_key_exists($key, $arguments)) {
@@ -301,6 +303,7 @@ trait DtoSystemTrait
 
             if (is_subclass_of($class, Dto::class)) {
                 $value = static::discoverDtoValue($hasCollection, $hasArray, $nameInData, $class, $data, $parameter->allowsNull(), $model, $classCollection);
+                dump('>>>',$value);
             } else {
                 if (is_subclass_of($class, Model::class)) {
                     $value = static::discoverModelValue($nameInData, $class, $data, $parameter->allowsNull());
@@ -337,7 +340,6 @@ trait DtoSystemTrait
         if ($value === null && $parameter->isDefaultValueAvailable() && ! $parameter->allowsNull()) {
             $value = $parameter->getDefaultValue();
         }
-
         return [$name, $value];
     }
 
@@ -661,9 +663,7 @@ trait DtoSystemTrait
                 $value[] = $class::from($item, $model);
             }
         } else {
-            $value = $namedData
-                ? ($namedData instanceof DtoCollection ? $class::from($namedData->first(), $model) : $class::from($namedData, $model))
-                : null;
+            $value = $class::from($namedData, $model);
         }
 
         return $value ?? null;
