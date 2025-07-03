@@ -125,8 +125,6 @@ trait DtoSystemTrait
             $created[$name] = $name;
         }
 
-        dump($arguments);
-
         foreach (static::$extends as $key => $types) {
 
             if (array_key_exists($key, $arguments)) {
@@ -303,7 +301,6 @@ trait DtoSystemTrait
 
             if (is_subclass_of($class, Dto::class)) {
                 $value = static::discoverDtoValue($hasCollection, $hasArray, $nameInData, $class, $data, $parameter->allowsNull(), $model, $classCollection);
-                dump('>>>',$value);
             } else {
                 if (is_subclass_of($class, Model::class)) {
                     $value = static::discoverModelValue($nameInData, $class, $data, $parameter->allowsNull());
