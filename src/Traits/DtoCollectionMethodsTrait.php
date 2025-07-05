@@ -183,7 +183,9 @@ trait DtoCollectionMethodsTrait
                 return [
                     $key => $value instanceof Dto || $value instanceof DtoCollection
                         ? $value->toImport()
-                        : (string) $value
+                        : (is_array($value) || is_object($value)
+                            ? json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT)
+                            : $value)
                 ];
             }
         };

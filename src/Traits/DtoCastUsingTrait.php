@@ -76,10 +76,12 @@ trait DtoCastUsingTrait
                 if ($value instanceof Dto || $value instanceof DtoCollection) {
                     return [$key => $this->source ?: (method_exists($value, 'toImport')
                         ? $value->toImport()
-                        : $value->toJson(JSON_UNESCAPED_UNICODE)
+                        : $value->toJson(JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT)
                     )];
                 } elseif (is_string($value)) {
                     return [$key => $value];
+                } elseif (is_array($value) || is_object($value)) {
+                    return [$key => json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT)];
                 }
                 return [$key => $value];
             }
