@@ -103,7 +103,7 @@ trait DtoSystemTrait
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      * @throws \ReflectionException
      */
-    protected static function makeInstanceFromArray(array $data, Model $model = null): array
+    protected static function makeInstanceFromArray(array $data, Model|null $model = null): array
     {
         $arguments = [];
         $rules = array_merge(static::$rules, static::rules());
@@ -770,10 +770,10 @@ trait DtoSystemTrait
     /**
      * Trap for model
      *
-     * @param  \Illuminate\Database\Eloquent\Model  $model
-     * @return \Illuminate\Database\Eloquent\Model
+     * @param  \Illuminate\Database\Eloquent\Model|null  $model
+     * @return \Illuminate\Database\Eloquent\Model|null
      */
-    protected static function configureModel(Model $model): Model
+    protected static function configureModel(Model|null $model): Model|null
     {
         return $model;
     }
