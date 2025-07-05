@@ -374,6 +374,8 @@ trait DtoHelpersTrait
             $this->set(
                 ...static::createNameValueFromProperty($parameter, $attributes)
             );
+
+            unset($attributes[$parameter->getName()]);
         }
 
         foreach (static::$extends as $key => $types) {
@@ -383,6 +385,13 @@ trait DtoHelpersTrait
             $this->set(
                 ...static::createNameValueFromExtendedProperty($key, $types, $attributes)
             );
+
+            unset($attributes[$key]);
+        }
+
+        foreach ($attributes as $key => $value) {
+
+            $this->set($key, $value);
         }
 
         return $this;

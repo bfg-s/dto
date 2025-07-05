@@ -337,6 +337,7 @@ trait DtoSystemTrait
         if ($value === null && $parameter->isDefaultValueAvailable() && ! $parameter->allowsNull()) {
             $value = $parameter->getDefaultValue();
         }
+
         return [$name, $value];
     }
 
@@ -654,10 +655,12 @@ trait DtoSystemTrait
                     }
                 }
             }
-        } elseif ($hasArray && is_iterable($namedData)) {
+        } elseif ($hasArray) {
             $value = $allowsNull ? null : [];
-            foreach ($namedData as $item) {
-                $value[] = $class::from($item, $model);
+            if (is_iterable($namedData)) {
+                foreach ($namedData as $item) {
+                    $value[] = $class::from($item, $model);
+                }
             }
         } else {
             $value = $class::from($namedData, $model);
