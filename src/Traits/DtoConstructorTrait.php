@@ -28,7 +28,7 @@ trait DtoConstructorTrait
      * Make an instance from any type
      *
      * @param  mixed|null  $item
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -57,7 +57,7 @@ trait DtoConstructorTrait
      * Make an instance from a callable
      *
      * @param  callable  $cb
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -70,7 +70,7 @@ trait DtoConstructorTrait
      * Make an instance from a resource
      *
      * @param  mixed  $resource
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -110,7 +110,7 @@ trait DtoConstructorTrait
      * Make an instance from a file
      *
      * @param  string  $filePath
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return LazyDtoCollection<int, static<TModel>>
      */
     public static function fromFile(string $filePath, Model|null $model = null): LazyDtoCollection
@@ -157,7 +157,7 @@ trait DtoConstructorTrait
      * Make an instance from URL
      *
      * @param  string  $url
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -176,7 +176,7 @@ trait DtoConstructorTrait
      * Make an instance from a GET request
      *
      * @param  string  $url
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -189,7 +189,7 @@ trait DtoConstructorTrait
      * Make an instance from a POST request
      *
      * @param  string  $url
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -203,7 +203,7 @@ trait DtoConstructorTrait
      *
      * @param  string  $method
      * @param  string  $url
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -229,7 +229,7 @@ trait DtoConstructorTrait
      * Make instance from cache
      *
      * @param  callable|null  $callback
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedCacheException
      */
@@ -261,7 +261,7 @@ trait DtoConstructorTrait
      * Make dto instances from a collection array
      *
      * @param  \Illuminate\Support\Collection|array  $items
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -295,7 +295,7 @@ trait DtoConstructorTrait
      * Make an instance from anything
      *
      * @param  mixed  $item
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      * @deprecated Use `from` method instead.
@@ -309,7 +309,7 @@ trait DtoConstructorTrait
      * Make an instance from an any object
      *
      * @param  object|null  $object
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -335,7 +335,7 @@ trait DtoConstructorTrait
      * Make an instance from DTO
      *
      * @param  \Bfg\Dto\Dto|class-string<Dto>  $dto
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -355,7 +355,7 @@ trait DtoConstructorTrait
      * Make an instance from Fluent
      *
      * @param  \Illuminate\Support\Fluent  $fluent
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -383,7 +383,7 @@ trait DtoConstructorTrait
     /**
      * Make an instance from a model
      *
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return static<TModel>
      */
     public static function fromModel(Model|null $model = null): static
@@ -403,7 +403,7 @@ trait DtoConstructorTrait
      * Dto constructor from serialize
      *
      * @param  string|null  $serialize
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -429,7 +429,7 @@ trait DtoConstructorTrait
      * Dto constructor from JSON
      *
      * @param  string|null  $json
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -455,7 +455,7 @@ trait DtoConstructorTrait
      * Dto constructor from request
      *
      * @param  FormRequest|Request|class-string<FormRequest|Request>|null  $request
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return static<TModel>
      */
     public static function fromRequest(FormRequest|Request|string|null $request = null, Model|null $model = null): static
@@ -489,7 +489,7 @@ trait DtoConstructorTrait
      * Dto constructor from an array
      *
      * @param  mixed  $data
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -554,7 +554,7 @@ trait DtoConstructorTrait
      * Dto constructor from empty
      *
      * @param  array<string, mixed>  $data
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return static<TModel>
      */
     public static function fromEmpty(array $data = [], Model|null $model = null): static
@@ -657,7 +657,7 @@ trait DtoConstructorTrait
      *
      * @param  string  $string
      * @param  string|null  $separator
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -704,7 +704,7 @@ trait DtoConstructorTrait
      * Make an instance from a class string
      *
      * @param  string|null  $class
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
@@ -723,7 +723,7 @@ trait DtoConstructorTrait
      * Make an instance from a container abstract
      *
      * @param  string  $abstract
-     * @param  TModel  $model
+     * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
