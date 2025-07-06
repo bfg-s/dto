@@ -52,6 +52,7 @@ use IteratorAggregate;
  * @implements ArrayAccess<string, mixed>
  * @implements Arrayable<string, mixed>
  * @implements Jsonable<string, mixed>
+ * @implements IteratorAggregate<string, mixed>
  *
  * @property string $version       The version of the DTO.
  * @property array  $cast          The casting rules for DTO properties.
