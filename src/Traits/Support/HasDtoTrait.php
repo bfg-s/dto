@@ -7,6 +7,7 @@ namespace Bfg\Dto\Traits\Support;
 use Bfg\Dto\Attributes\DtoClass;
 use Bfg\Dto\Collections\DtoCollection;
 use Bfg\Dto\Dto;
+use Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException;
 
 /**
  * Trait HasDtoTrait
@@ -22,7 +23,6 @@ trait HasDtoTrait
      * Get the DTO instance from the class.
      *
      * @return TDto|DtoCollection<int, TDto>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public function getDto(): Dto|DtoCollection
     {
