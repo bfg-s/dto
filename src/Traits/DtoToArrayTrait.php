@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bfg\Dto\Traits;
 
+use Bfg\Dto\Attributes\DtoExceptProperty;
 use Bfg\Dto\Attributes\DtoFromCache;
 use Bfg\Dto\Attributes\DtoFromConfig;
 use Bfg\Dto\Attributes\DtoFromRequest;
@@ -48,9 +49,7 @@ trait DtoToArrayTrait
     public function toArray(): array
     {
         $parameters = static::getConstructorParameters();
-        $result = [
-            // 'version' => static::$version
-        ];
+        $result = [];
         $originals = $this->originals();
         $keysOnly = static::$__requestKeys[static::class][spl_object_id($this)] ?? [];
         $paramNames = [];
@@ -67,16 +66,18 @@ trait DtoToArrayTrait
             $value = $this->{$key} ?? null;
             $resource = null;
             $foreign = false;
-            $attributes = $parameter->getAttributes(DtoToResource::class);
+            $attributes = $parameter->getAttributes(DtoExceptProperty::class);
+            if (count($attributes) > 0) {
+                continue;
+            }
             if (! static::$__strictToArray) {
+                $attributes = $parameter->getAttributes(DtoToResource::class);
                 foreach ($attributes as $attribute) {
                     $instance = $attribute->newInstance();
                     if (is_subclass_of($instance->class, JsonResource::class)) {
                         $resource = $instance->class;
                     }
                 }
-            }
-            if (! static::$__strictToArray) {
                 $attributes = $parameter->getAttributes(DtoMapTo::class);
                 foreach ($attributes as $attribute) {
                     $instance = $attribute->newInstance();
@@ -107,7 +108,7 @@ trait DtoToArrayTrait
             }
 
             if ($foreign) {
-                if (data_get($originals, $key, '__NOT_FOUND') === '__NOT_FOUND') {
+                if (! dto_data_exists($originals, $key)) {
                     continue;
                 }
             }
@@ -171,7 +172,13 @@ trait DtoToArrayTrait
                     continue;
                 }
             }
-
+            $attributes = $property->getAttributes(DtoExceptProperty::class);
+            if (count($attributes) > 0) {
+                $instance = $attributes[0]->newInstance();
+                if ($instance->from === $key) {
+                    continue;
+                }
+            }
             $attributes = $property->getAttributes(DtoToResource::class);
             if (! static::$__strictToArray) {
                 foreach ($attributes as $attribute) {
