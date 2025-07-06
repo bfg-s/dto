@@ -36,6 +36,7 @@ use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Traits\Conditionable;
 use Illuminate\Support\Traits\Macroable;
 use Illuminate\Support\Traits\Tappable;
+use IteratorAggregate;
 
 /**
  * Class Dto
@@ -62,7 +63,7 @@ use Illuminate\Support\Traits\Tappable;
  * @property bool   $logsEnabled   Indicates if logging is enabled for this DTO.
  */
 #[AllowDynamicProperties]
-abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Castable
+abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Castable, IteratorAggregate
 {
     use DtoSystemVariablesTrait;
     /** @use DtoConstructorTrait<TModel> */

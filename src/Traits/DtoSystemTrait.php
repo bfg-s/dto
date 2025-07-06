@@ -32,6 +32,14 @@ use ReflectionParameter;
 trait DtoSystemTrait
 {
     /**
+     * @return \Traversable
+     */
+    public function getIterator(): \Traversable
+    {
+        return new \ArrayIterator($this->toArray());
+    }
+
+    /**
      * Set import type for the DTO
      *
      * @param  string  $type
