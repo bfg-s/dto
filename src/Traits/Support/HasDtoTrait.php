@@ -7,7 +7,6 @@ namespace Bfg\Dto\Traits\Support;
 use Bfg\Dto\Attributes\DtoClass;
 use Bfg\Dto\Collections\DtoCollection;
 use Bfg\Dto\Dto;
-use Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException;
 
 /**
  * Trait HasDtoTrait
@@ -15,19 +14,49 @@ use Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException;
  * This trait is used to mark classes that are DTOs (Data Transfer Objects).
  *
  * @package Bfg\Dto\Traits\Support
- * @template TDto of Dto<mixed>
+ * @template TDto of \Bfg\Dto\Dto<mixed>
  */
 trait HasDtoTrait
 {
     /**
      * Get the DTO instance from the class.
      *
-     * @return TDto|DtoCollection<int, TDto>
+     * @return TDto
      */
-    public function getDto(): Dto|DtoCollection
+    public function getDto(): Dto
     {
-        /** @var class-string<Dto>|null $dataClass */
-        $dataClass = match (true) {
+        $dtoClass = $this->getDtoClass();
+        $dto = $dtoClass::from($this);
+        if (! ($dto instanceof Dto)) {
+            throw new \BadFunctionCallException('The DTO class must return a single instance of Dto, not a collection. Use the `getDtoCollection` method instead.');
+        }
+        return $dto;
+    }
+
+    /**
+     * Get the DTO collection from the class.
+     *
+     * @return \Bfg\Dto\Collections\DtoCollection<int, TDto>
+     */
+    public function getDtoCollection(): DtoCollection
+    {
+        $dtoClass = $this->getDtoClass();
+        $dtoCollection = $dtoClass::from($this);
+        if (! ($dtoCollection instanceof DtoCollection)) {
+            throw new \BadFunctionCallException('The DTO class must return a collection of Dto, not a single instance. Use the `getDto` method instead.');
+        }
+        return $dtoCollection;
+    }
+
+    /**
+     * Get the DTO class name from the class.
+     *
+     * @return class-string<Dto>
+     */
+    public function getDtoClass(): string
+    {
+        /** @var class-string<Dto>|null $dtoClass */
+        $dtoClass = match (true) {
             property_exists($this, 'dtoClass') => $this->dtoClass,
             method_exists($this, 'dtoClass') => $this->dtoClass(),
             default => (function () {
@@ -42,7 +71,7 @@ trait HasDtoTrait
             })(),
         };
 
-        if ($dataClass === null) {
+        if ($dtoClass === null) {
             throw new \RuntimeException(
                 sprintf(
                     'The dto class is not defined in %s. Please define it using the "dtoClass" property or method, or by using the #[DtoClass] attribute.',
@@ -51,16 +80,16 @@ trait HasDtoTrait
             );
         }
 
-        if (! is_a($dataClass, Dto::class, true)) {
+        if (! is_a($dtoClass, Dto::class, true)) {
             throw new \RuntimeException(
                 sprintf(
                     'The dto class "%s" must be an instance of %s',
-                    $dataClass,
+                    $dtoClass,
                     Dto::class
                 )
             );
         }
 
-        return $dataClass::from($this);
+        return $dtoClass;
     }
 }
