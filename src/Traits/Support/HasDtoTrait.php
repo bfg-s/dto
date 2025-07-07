@@ -49,6 +49,17 @@ trait HasDtoTrait
     }
 
     /**
+     * Get the DTO instance or collection from the class.
+     *
+     * @return TDto|\Bfg\Dto\Collections\DtoCollection<int, TDto>
+     */
+    public function getMixedDto(): Dto|DtoCollection
+    {
+        $dtoClass = $this->getDtoClass();
+        return $dtoClass::from($this);
+    }
+
+    /**
      * Get the DTO class name from the class.
      *
      * @return class-string<Dto>
