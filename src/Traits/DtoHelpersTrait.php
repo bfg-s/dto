@@ -60,7 +60,7 @@ trait DtoHelpersTrait
      */
     public static function version(): string
     {
-        return static::$version;
+        return static::$dtoVersion;
     }
 
     /**
@@ -442,7 +442,7 @@ trait DtoHelpersTrait
      */
     public function dataHash(): string
     {
-        return md5(static::$version . $this->toJson());
+        return md5(static::$dtoVersion . $this->toJson());
     }
 
     /**
@@ -452,7 +452,7 @@ trait DtoHelpersTrait
      */
     public function hash(): string
     {
-        return md5(spl_object_id($this) . static::$version . $this->toJson());
+        return md5(spl_object_id($this) . static::$dtoVersion . $this->toJson());
     }
 
     /**

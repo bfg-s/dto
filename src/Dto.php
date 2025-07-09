@@ -54,7 +54,7 @@ use IteratorAggregate;
  * @implements Jsonable<string, mixed>
  * @implements IteratorAggregate<string, mixed>
  *
- * @property string $version       The version of the DTO.
+ * @property string $dtoVersion    The version of the DTO.
  * @property array  $cast          The casting rules for DTO properties.
  * @property array  $hidden        The hidden properties.
  * @property array  $rules         The validation rules.
@@ -106,7 +106,7 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Cas
      *
      * @var string
      */
-    protected static string $version = '1.0';
+    protected static string $dtoVersion = '1.0';
 
     /**
      * The extends properties

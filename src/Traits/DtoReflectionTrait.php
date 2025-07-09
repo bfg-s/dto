@@ -21,7 +21,7 @@ trait DtoReflectionTrait
     {
         return ExplainDto::fromArray([
             'name' => static::class,
-            'ver' => static::$version,
+            'ver' => static::$dtoVersion,
             'logsIsEnabled' => static::$logsEnabled,
             'meta' => static::$__meta[static::class][spl_object_id($this)] ?? [],
             'properties' => collect(static::getConstructorParameters())->map(function ($parameter) {
