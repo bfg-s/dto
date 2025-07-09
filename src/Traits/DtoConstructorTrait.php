@@ -30,7 +30,6 @@ trait DtoConstructorTrait
      * @param  mixed|null  $item
      * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function from(mixed $item = null, Model|null $model = null): DtoCollection|static
     {
@@ -59,7 +58,6 @@ trait DtoConstructorTrait
      * @param  callable  $cb
      * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromCallable(callable $cb, Model|null $model = null): DtoCollection|static
     {
@@ -72,7 +70,6 @@ trait DtoConstructorTrait
      * @param  mixed  $resource
      * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromResource(mixed $resource, Model|null $model = null): DtoCollection|static
     {
@@ -93,7 +90,6 @@ trait DtoConstructorTrait
      * @param  string  $sourceName
      * @param ...$arguments
      * @return DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromSource(string $sourceName, ...$arguments): DtoCollection|static
     {
@@ -159,7 +155,6 @@ trait DtoConstructorTrait
      * @param  string  $url
      * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromUrl(string $url, Model|null $model = null): DtoCollection|static
     {
@@ -178,7 +173,6 @@ trait DtoConstructorTrait
      * @param  string  $url
      * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromGet(string $url, Model|null $model = null): DtoCollection|static
     {
@@ -191,7 +185,6 @@ trait DtoConstructorTrait
      * @param  string  $url
      * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromPost(string $url, Model|null $model = null): DtoCollection|static
     {
@@ -205,7 +198,6 @@ trait DtoConstructorTrait
      * @param  string  $url
      * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromHttp(string $method, string $url, Model|null $model = null): DtoCollection|static
     {
@@ -263,7 +255,6 @@ trait DtoConstructorTrait
      * @param  \Illuminate\Support\Collection|array  $items
      * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromCollection(mixed $items = [], Model|null $model = null): DtoCollection
     {
@@ -297,7 +288,6 @@ trait DtoConstructorTrait
      * @param  mixed  $item
      * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      * @deprecated Use `from` method instead.
      */
     public static function fromAnything(mixed $item = null, Model|null $model = null): DtoCollection|static
@@ -311,7 +301,6 @@ trait DtoConstructorTrait
      * @param  object|null  $object
      * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromObject(object|null $object = null, Model|null $model = null): DtoCollection|static
     {
@@ -337,7 +326,6 @@ trait DtoConstructorTrait
      * @param  \Bfg\Dto\Dto|class-string<Dto>  $dto
      * @param  TModel|Model|null  $model
      * @return static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromDto(Dto|string $dto, Model|null $model = null): static
     {
@@ -357,7 +345,6 @@ trait DtoConstructorTrait
      * @param  \Illuminate\Support\Fluent  $fluent
      * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromFluent(Fluent $fluent, Model|null $model = null): DtoCollection|static
     {
@@ -405,7 +392,6 @@ trait DtoConstructorTrait
      * @param  string|null  $serialize
      * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromSerialize(string|null $serialize = null, Model|null $model = null): DtoCollection|static
     {
@@ -431,7 +417,6 @@ trait DtoConstructorTrait
      * @param  string|null  $json
      * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromJson(string|null $json = null, Model|null $model = null): DtoCollection|static
     {
@@ -491,7 +476,6 @@ trait DtoConstructorTrait
      * @param  mixed  $data
      * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromArray(mixed $data = null, Model|null $model = null): DtoCollection|static
     {
@@ -531,7 +515,6 @@ trait DtoConstructorTrait
      * @param  mixed|null  $data
      * @param  \Illuminate\Database\Eloquent\Model|null  $model
      * @return static
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromAssoc(mixed $data = null, Model|null $model = null): static
     {
@@ -659,7 +642,6 @@ trait DtoConstructorTrait
      * @param  string|null  $separator
      * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromString(string $string, string|null $separator = null, Model|null $model = null): DtoCollection|static
     {
@@ -706,7 +688,6 @@ trait DtoConstructorTrait
      * @param  string|null  $class
      * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromClassString(string|null $class, Model|null $model = null): DtoCollection|static
     {
@@ -725,7 +706,6 @@ trait DtoConstructorTrait
      * @param  string  $abstract
      * @param  TModel|Model|null  $model
      * @return \Bfg\Dto\Collections\DtoCollection<int, static<TModel>>|static<TModel>
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public static function fromContainer(string $abstract, Model|null $model = null): DtoCollection|static
     {
