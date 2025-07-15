@@ -48,7 +48,6 @@ php artisan make:dto UserDto
 * [Property hidden](#property-hidden)
 * [Property rules](#property-rules)
 * [Property encrypted](#property-encrypted)
-* [Property mutations](#property-mutations)
 * [Computed properties](#computed-properties)
 * [Lazy properties](#lazy-properties)
 * [Method property access](#method-property-access)
@@ -58,15 +57,20 @@ php artisan make:dto UserDto
 * [Meta](#meta)
 * [HasDtoTrait](#hasdtotrait)
 * [Attributes](#attributes)
-    * [DtoItem](#dtoitem)
+    * [DtoAuthenticatedUser](#dtoauthenticateduser)
     * [DtoCast](#dtocast)
-    * [DtoMapFrom](#dtomapfrom)
-    * [DtoMapTo]()
-    * [DtoMapApi]()
+    * [DtoClass](#dtoclass)
+    * [DtoExceptProperty](#dtoexceptproperty)
+    * [DtoFromCache](#dtofromcache)
     * [DtoFromConfig](#dtofromconfig)
     * [DtoFromRequest](#dtofromrequest)
     * [DtoFromRoute](#dtofromroute)
-    * [DtoFromCache](#dtofromcache)
+    * [DtoItem](#dtoitem)
+    * [DtoMapApi](#dtomapapi)
+    * [DtoMapFrom](#dtomapfrom)
+    * [DtoMapTo](#dtomapto)
+    * [DtoMutateFrom](#dtomutatefrom)
+    * [DtoMutateTo](#dtomutateto)
     * [DtoToResource](#dtotoresource)
 * [Events](#events)
     * [creating](#creating)
@@ -657,35 +661,6 @@ echo $dto->password; // You will get decrypted password
 dump($dto->toArray()); // ['name' => 'John Doe', 'email' => 'test@gmail.com', 'password' => 'encrypted data']
 ```
 
-### Property mutations
-You can use property mutations like in Laravel models.
-```php
-use Bfg\Dto\Dto;
-
-class UserDto extends Dto
-{            
-    public function __construct(
-        public string $name,
-        public string $email,
-        public ?string $password,
-    ) {}
-    
-    protected function fromArrayName(string $name): string
-    {
-        return ucwords($name);
-    }
-
-    protected function toArrayName(string $name): string
-    {
-        return strtolower($name);
-    }
-}
-```
-- `fromArrayName` method will be called when you create a new DTO data from an array.
-- `toArrayName` method will be called when you convert DTO data to an array.
-
-This method gets the property value and must return the new value.
-
 ### Computed properties
 You can use computed properties.
 ```php
@@ -957,6 +932,59 @@ class UserDto extends Dto
 }
 ```
 
+#### DtoMapApi
+You can use the `DtoMapApi` attribute for converting the DTO keys to the API camel case.
+```php
+use Bfg\Dto\Dto;
+use Bfg\Dto\Attributes\DtoMapApi;
+
+class UserDto extends Dto
+{            
+    public function __construct(
+        #[DtoMapApi] 
+        public string $userName,
+        #[DtoMapApi] 
+        public string $userEmail,
+        public ?string $password,
+    ) {}
+}
+
+$dto = UserDto::fromArray([
+    'user_name' => 'John Doe',
+    'user_email' => 'test@gmail.com',
+    'password' => '123456',
+]);
+
+echo $dto->userName; // John Doe
+
+$dto->toArray(); // ['user_name' => 'John Doe', 'user_email' => 'test@gmail.com', 'password' => '123456']
+```
+
+#### DtoAuthenticatedUser
+You can use the `DtoAuthenticatedUser` attribute to set the authenticated user for the DTO.
+```php
+use Bfg\Dto\Dto;
+
+class UserSettingsDto extends Dto
+{            
+    public function __construct(
+        #[\Bfg\Dto\Attributes\DtoAuthenticatedUser]
+        public \App\Models\User $user,
+        #[\Bfg\Dto\Attributes\DtoMapApi]
+        public bool $receiveNotifications,
+        #[\Bfg\Dto\Attributes\DtoMapApi]
+        public bool $darkMode,
+    ) {}
+}
+
+$dto = UserSettingsDto::fromAssoc([
+    'receive_notifications' => true,
+    'dark_mode' => false,
+]);
+
+$dto->user; // Will return the authenticated user model
+```
+
 #### DtoCast
 You can use the `DtoCast` attribute to set the DTO for the property.
 ```php
@@ -975,6 +1003,56 @@ UserPhoneDto::fromArray([
 ]);
 ```
 > Attention! If you do not specify the property casting, then, when you try to assign a different type to the property, there will be a PHP error that will say that you are trying to assign a different type than expected.
+
+#### DtoClass
+You can use the `DtoClass` attribute to set the DTO for the class.
+```php
+use Bfg\Dto\Dto;
+
+class UserDto extends Dto
+{            
+    public function __construct(
+        public string $name,
+        public string $email,
+        public ?string $password,
+    ) {}
+}
+
+#[\Bfg\Dto\Attributes\DtoClass(UserDto::class)]
+class User extends Model
+{
+    /** @use \Bfg\Dto\Traits\Support\HasDtoTrait<UserDto::class> */
+    use \Bfg\Dto\Traits\Support\HasDtoTrait;
+}
+
+// Now you can use the DTO in the model
+$user = User::find(1);
+$dto = $user->getDto(); // UserDto object
+```
+
+#### DtoExceptProperty
+You can use the `DtoExceptProperty` attribute to exclude the property from the DTO.
+```php
+use Bfg\Dto\Dto;
+
+class UserDto extends Dto
+{            
+    public function __construct(
+        public string $name,
+        public string $email,
+        #[\Bfg\Dto\Attributes\DtoExceptProperty] 
+        public ?string $password, // This property will be excluded from the DTO
+    ) {}
+}
+
+$dto = UserDto::fromArray([
+    'name' => 'John Doe',
+    'email' => 'test@gmail.com',
+    'password' => '123456',
+]);
+
+echo $dto->toArray(); // ['name' => 'John Doe', 'email' => 'test@gmail.com']
+```
 
 #### DtoItem
 You can use the `DtoItem` attribute to set the DTO for the collection property.
@@ -1044,6 +1122,86 @@ class UserDto extends Dto
 }
 ```
 Since we cannot write an attribute to a separate element of the array, we need to specify the name of the field to which we need to assign an additional name as the second parameter.
+
+#### DtoMapTo
+You can use the `DtoMapTo` attribute to add the name of the DTO.
+```php
+use Bfg\Dto\Dto;
+class UserDto extends Dto
+{            
+    public function __construct(
+        public string $name,
+        public string $email,
+        public ?string $password,
+        #[\Bfg\Dto\Attributes\DtoMapTo('user_emails.email1'), \Bfg\Dto\Attributes\DtoMapFrom('email')]
+        public string $userEmail,
+    ) {}
+}
+
+$dto = UserDto::fromArray([
+    'name' => 'John Doe',
+    'email' => 'test@gmail.com',
+    'password' => '123456'
+]);
+
+echo $dto->userEmail;
+
+$dto->toArray(); // ['name' => 'John Doe', 'email' => 'test@gmail.com', 'password' => '123456', 'user_emails' => ['email1' => 'test@gmail.com']]
+```
+
+#### DtoMutateFrom
+You can use the `DtoMutateFrom` attribute to mutate the property value from any to the DTO.
+```php
+use Bfg\Dto\Dto;
+
+class SettingsDto extends Dto
+{            
+    public function __construct(
+        #[\Bfg\Dto\Attributes\DtoMutateFrom('mutateStringBoolean')]
+        public bool $receiveNotifications,
+    ) {}
+    
+    public static function mutateStringBoolean(mixed $value): bool
+    {
+        return is_string($value)
+            ? trim(strtolower($value)) === 'true'
+            : (bool) $value;
+    }
+}
+
+$dto = SettingsDto::fromArray([
+    'receive_notifications' => 'true', // Will be mutated to true
+]);
+
+echo $dto->receiveNotifications; // true
+```
+
+#### DtoMutateTo
+You can use the `DtoMutateTo` attribute to mutate the property value to any type from the DTO.
+```php
+use Bfg\Dto\Dto;
+
+class SettingsDto extends Dto
+{            
+    public function __construct(
+        #[\Bfg\Dto\Attributes\DtoMutateTo('mutateBooleanString'), \Bfg\Dto\Attributes\DtoMapApi]
+        public bool $receiveNotifications,
+    ) {}
+    
+    public static function mutateBooleanString(mixed $value): string
+    {
+        return $value ? 'true' : 'false';
+    }
+}
+
+$dto = SettingsDto::fromArray([
+    'receive_notifications' => true,
+]);
+
+echo $dto->receiveNotifications; // true
+
+$dto->toArray() // ['receive_notifications' => 'true']
+```
 
 #### DtoFromConfig
 You can use the `DtoFromConfig` attribute to add the property value from the config.

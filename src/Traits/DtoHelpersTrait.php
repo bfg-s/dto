@@ -558,13 +558,6 @@ trait DtoHelpersTrait
         } else {
             static::$__setWithoutCasting = false;
         }
-        $setMutatorMethod = 'fromArray' . ucfirst(Str::camel($key));
-
-        if (method_exists(static::class, $setMutatorMethod)) {
-            $value = static::fireEvent(['mutating', $key], $value, static::SET_CURRENT_DATA, $this, $arguments);
-            $value = $this->{$setMutatorMethod}($value);
-            $value = static::fireEvent(['mutated', $key], $value, static::SET_CURRENT_DATA, $this, $arguments);
-        }
 
         if (! $value) {
 
@@ -630,10 +623,6 @@ trait DtoHelpersTrait
     {
         $start = static::startTime();
         $value = $this->{$key} ?? (static::$__parameters[static::class][spl_object_id($this)][$key] ?? null);
-        $mutatorMethodName = 'toArray'.ucfirst(Str::camel($key));
-        if (method_exists($this, $mutatorMethodName)) {
-            $value = $this->{$mutatorMethodName}($value);
-        }
         if (static::isEnumCastable($key)) {
             $value = static::setEnumCastableAttribute($key, $value);
         } elseif (static::isClassCastable($key)) {

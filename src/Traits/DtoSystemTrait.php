@@ -12,6 +12,7 @@ use Bfg\Dto\Attributes\DtoFromRoute;
 use Bfg\Dto\Attributes\DtoItem;
 use Bfg\Dto\Attributes\DtoMapApi;
 use Bfg\Dto\Attributes\DtoMapFrom;
+use Bfg\Dto\Attributes\DtoMutateFrom;
 use Bfg\Dto\Collections\DtoCollection;
 use Bfg\Dto\Dto;
 use Bfg\Dto\Exceptions\DtoExtensionTypeNotFoundException;
@@ -402,6 +403,7 @@ trait DtoSystemTrait
     ): array {
         $notFoundKeys = [];
         $isOtherParam = false;
+        $originalParameterName = $parameter->getName();
         $nameInData = $parameter->getName();
         $attributes = $parameter->getAttributes(DtoMapFrom::class);
         foreach ($attributes as $attribute) {
@@ -413,11 +415,31 @@ trait DtoSystemTrait
                 $notFoundKeys[] = $instance->name;
             }
         }
-        $attributes = $parameter->getAttributes(DtoMapApi::class);
+        if ($nameInData === $originalParameterName) {
+            $attributes = $parameter->getAttributes(DtoMapApi::class);
+            foreach ($attributes as $attribute) {
+                $instance = $attribute->newInstance();
+                if ($instance instanceof DtoMapApi) {
+                    $nameInData = Str::snake($nameInData);
+                }
+            }
+        }
+        $attributes = $parameter->getAttributes(DtoMutateFrom::class);
         foreach ($attributes as $attribute) {
             $instance = $attribute->newInstance();
-            if ($instance instanceof DtoMapApi) {
-                $nameInData = Str::snake($nameInData);
+            if ($instance instanceof DtoMutateFrom) {
+                $instance->cb = is_string($instance->cb) && ! is_callable($instance->cb)
+                    ? [static::class, $instance->cb] : $instance->cb;
+                if (is_callable($instance->cb)) {
+                    $data[$nameInData] = call_user_func(
+                        $instance->cb,
+                        $data[$nameInData] ?? ($data[$originalParameterName] ?? null)
+                    );
+                } else {
+                    throw new \InvalidArgumentException(
+                        'The callback for DtoMutateFrom must be callable.'
+                    );
+                }
             }
         }
         $attributes = $parameter->getAttributes(DtoFromRoute::class);
@@ -472,6 +494,37 @@ trait DtoSystemTrait
                     $nameInData = $instance->name;
                 } else {
                     $notFoundKeys[] = $instance->name;
+                }
+            }
+        }
+        if ($key === $nameInData) {
+            $attributes = $property->getAttributes(DtoMapApi::class);
+            foreach ($attributes as $attribute) {
+                $instance = $attribute->newInstance();
+                if ($instance->from === $key) {
+                    if ($instance instanceof DtoMapApi) {
+                        $nameInData = Str::snake($nameInData);
+                    }
+                }
+            }
+        }
+        $attributes = $property->getAttributes(DtoMutateFrom::class);
+        foreach ($attributes as $attribute) {
+            $instance = $attribute->newInstance();
+            if ($instance instanceof DtoMutateFrom) {
+                if ($instance->from === $key) {
+                    $instance->cb = is_string($instance->cb) && !is_callable($instance->cb)
+                        ? [static::class, $instance->cb] : $instance->cb;
+                    if (is_callable($instance->cb)) {
+                        $data[$nameInData] = call_user_func(
+                            $instance->cb,
+                            $data[$nameInData] ?? ($data[$key] ?? null)
+                        );
+                    } else {
+                        throw new \InvalidArgumentException(
+                            'The callback for DtoMutateFrom must be callable.'
+                        );
+                    }
                 }
             }
         }

@@ -12,6 +12,7 @@ use Bfg\Dto\Attributes\DtoFromRoute;
 use Bfg\Dto\Attributes\DtoMapApi;
 use Bfg\Dto\Attributes\DtoMapFrom;
 use Bfg\Dto\Attributes\DtoMapTo;
+use Bfg\Dto\Attributes\DtoMutateTo;
 use Bfg\Dto\Attributes\DtoToResource;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
@@ -44,7 +45,7 @@ trait DtoToArrayTrait
     /**
      * Get the instance as an array.
      *
-     * @return array<TKey, TValue>
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -56,7 +57,8 @@ trait DtoToArrayTrait
 
         foreach ($parameters as $parameter) {
             $key = $parameter->getName();
-            if (in_array($key, static::$hidden) && ! static::$__strictToArray) {
+            $originalKey = $parameter->getName();
+            if (in_array($key, static::$hidden)) {
                 continue;
             }
             if ($keysOnly && ! in_array($key, $keysOnly)) {
@@ -70,24 +72,43 @@ trait DtoToArrayTrait
             if (count($attributes) > 0) {
                 continue;
             }
-            if (! static::$__strictToArray) {
-                $attributes = $parameter->getAttributes(DtoToResource::class);
-                foreach ($attributes as $attribute) {
-                    $instance = $attribute->newInstance();
-                    if (is_subclass_of($instance->class, JsonResource::class)) {
-                        $resource = $instance->class;
-                    }
+            $attributes = $parameter->getAttributes(DtoToResource::class);
+            foreach ($attributes as $attribute) {
+                $instance = $attribute->newInstance();
+                if (is_subclass_of($instance->class, JsonResource::class)) {
+                    $resource = $instance->class;
+                } else {
+                    throw new \InvalidArgumentException('The class for DtoToResource must be a subclass of JsonResource.');
                 }
-                $attributes = $parameter->getAttributes(DtoMapTo::class);
-                foreach ($attributes as $attribute) {
-                    $instance = $attribute->newInstance();
+            }
+            $attributes = $parameter->getAttributes(DtoMapTo::class);
+            foreach ($attributes as $attribute) {
+                $instance = $attribute->newInstance();
+                if (! empty($instance->name)) {
                     $key = $instance->name;
-                    break;
+                } else {
+                    throw new \InvalidArgumentException('The name for DtoMapTo must be a non-empty string.');
                 }
+                break;
+            }
+            if ($key === $originalKey) {
                 $attributes = $parameter->getAttributes(DtoMapApi::class);
                 foreach ($attributes as $attribute) {
                     $key = Str::snake($key);
                     break;
+                }
+            }
+            $attributes = $parameter->getAttributes(DtoMutateTo::class);
+
+            foreach ($attributes as $attribute) {
+                $instance = $attribute->newInstance();
+                $instance->cb = is_string($instance->cb) && ! is_callable($instance->cb)
+                    ? [$this, $instance->cb] : $instance->cb;
+                if (is_callable($instance->cb)) {
+                    $value = call_user_func($instance->cb, $value);
+                    break;
+                } else {
+                    throw new \InvalidArgumentException('The callback for DtoMutateTo must be callable.');
                 }
             }
             $attributes = $parameter->getAttributes(DtoFromRoute::class);
@@ -144,8 +165,8 @@ trait DtoToArrayTrait
         $property = (new \ReflectionProperty(static::class, 'extends'));
 
         foreach (static::$extends as $key => $types) {
-
-            if (in_array($key, static::$hidden) && ! static::$__strictToArray) {
+            $originalKey = $key;
+            if (in_array($key, static::$hidden)) {
                 continue;
             }
             if ($keysOnly && ! in_array($key, $keysOnly)) {
@@ -180,25 +201,25 @@ trait DtoToArrayTrait
                 }
             }
             $attributes = $property->getAttributes(DtoToResource::class);
-            if (! static::$__strictToArray) {
-                foreach ($attributes as $attribute) {
-                    $instance = $attribute->newInstance();
-                    if ($instance->from === $key) {
-                        if (is_subclass_of($instance->class, JsonResource::class)) {
-                            $resource = $instance->class;
-                        }
+            foreach ($attributes as $attribute) {
+                $instance = $attribute->newInstance();
+                if ($instance->from === $key) {
+                    if (is_subclass_of($instance->class, JsonResource::class)) {
+                        $resource = $instance->class;
+                    } else {
+                        throw new \InvalidArgumentException('The class for DtoToResource must be a subclass of JsonResource.');
                     }
                 }
             }
-            if (! $resource && ! static::$__strictToArray) {
-                $attributes = $property->getAttributes(DtoMapTo::class);
-                foreach ($attributes as $attribute) {
-                    $instance = $attribute->newInstance();
-                    if ($instance->from === $key) {
-                        $key = $instance->name;
-                        break;
-                    }
+            $attributes = $property->getAttributes(DtoMapTo::class);
+            foreach ($attributes as $attribute) {
+                $instance = $attribute->newInstance();
+                if ($instance->from === $key) {
+                    $key = $instance->name;
+                    break;
                 }
+            }
+            if ($key === $originalKey) {
                 $attributes = $property->getAttributes(DtoMapApi::class);
                 foreach ($attributes as $attribute) {
                     $instance = $attribute->newInstance();
@@ -207,6 +228,20 @@ trait DtoToArrayTrait
                             $key = Str::snake($key);
                             break;
                         }
+                    }
+                }
+            }
+            $attributes = $property->getAttributes(DtoMutateTo::class);
+            foreach ($attributes as $attribute) {
+                $instance = $attribute->newInstance();
+                if ($instance->from === $key) {
+                    $instance->cb = is_string($instance->cb) && ! is_callable($instance->cb)
+                        ? [$this, $instance->cb] : $instance->cb;
+                    if (is_callable($instance->cb)) {
+                        $value = call_user_func($instance->cb, $value);
+                        break;
+                    } else {
+                        throw new \InvalidArgumentException('The callback for DtoMutateTo must be callable.');
                     }
                 }
             }
@@ -230,7 +265,7 @@ trait DtoToArrayTrait
                     }
                 }
             }
-            $attributes = $parameter->getAttributes(DtoFromRequest::class);
+            $attributes = $property->getAttributes(DtoFromRequest::class);
             if ($attributes) {
                 foreach ($attributes as $attribute) {
                     $instance = $attribute->newInstance();
@@ -240,7 +275,7 @@ trait DtoToArrayTrait
                     }
                 }
             }
-            $attributes = $parameter->getAttributes(DtoFromCache::class);
+            $attributes = $property->getAttributes(DtoFromCache::class);
             if ($attributes) {
                 foreach ($attributes as $attribute) {
                     $instance = $attribute->newInstance();
@@ -267,7 +302,7 @@ trait DtoToArrayTrait
         // Dynamically add extends properties
         foreach (get_object_vars($this) as $key => $value) {
             if (! isset($result[$key]) && ! in_array($key, $paramNames)) {
-                if (in_array($key, static::$hidden) && ! static::$__strictToArray) {
+                if (in_array($key, static::$hidden)) {
                     continue;
                 }
                 if ($keysOnly && ! in_array($key, $keysOnly)) {
@@ -302,19 +337,15 @@ trait DtoToArrayTrait
             }
         }
 
-        if (! static::$__strictToArray) {
-            $methods = get_class_methods($this);
+        $methods = get_class_methods($this);
 
-            foreach ($methods as $method) {
-                if ($method !== 'with' && str_starts_with($method, 'with')) {
-                    $name = Str::of($method)->replaceFirst('with', '')->snake()->camel()->toString();
-                    if (method_exists($this, $method)) {
-                        $result[$name] = $this->{$method}();
-                    }
+        foreach ($methods as $method) {
+            if ($method !== 'with' && str_starts_with($method, 'with')) {
+                $name = Str::of($method)->replaceFirst('with', '')->snake()->camel()->toString();
+                if (method_exists($this, $method)) {
+                    $result[$name] = $this->{$method}();
                 }
             }
-        } else {
-            static::$__strictToArray = false;
         }
 
         $isSnakeKeys = $this->getSetting('snakeKeys', false);
@@ -350,10 +381,6 @@ trait DtoToArrayTrait
      */
     protected function buildObjectValue(mixed $value, string $key): mixed
     {
-        $mutatorMethodName = 'toArray'.ucfirst(Str::camel($key));
-        if (method_exists($this, $mutatorMethodName)) {
-            $value = $this->{$mutatorMethodName}($value);
-        }
         if ($value instanceof Model) {
             $value = $value->id;
         }

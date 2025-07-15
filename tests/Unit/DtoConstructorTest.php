@@ -3,12 +3,14 @@
 namespace Bfg\Dto\Tests\Unit;
 
 use Bfg\Dto\Collections\DtoCollection;
+use Bfg\Dto\Tests\SettingsDto;
 use Bfg\Dto\Tests\Test2Dto;
 use Bfg\Dto\Tests\TestDto;
 use PHPUnit\Framework\TestCase;
 
 include_once __DIR__.'/../TestDto.php';
 include_once __DIR__.'/../Test2Dto.php';
+include_once __DIR__.'/../SettingsDto.php';
 
 class DtoConstructorTest extends TestCase
 {
@@ -203,5 +205,28 @@ class DtoConstructorTest extends TestCase
         $this->assertTrue($dto->name === 'John Doe');
         $this->assertTrue($dto->email === 'test@gmail.com');
         $this->assertTrue($dto->test instanceof Test2Dto);
+    }
+
+    public function test_from_mutator()
+    {
+        $dto = SettingsDto::fromAssoc([
+            'receive_notifications' => 'True'
+        ]);
+
+        $this->assertTrue($dto->receiveNotifications);
+
+        $array = $dto->toArray();
+
+        $this->assertTrue($array['receive_notifications'] === 'True');
+
+        $dto = SettingsDto::fromAssoc([
+            'receive_notifications' => 'False'
+        ]);
+
+        $this->assertFalse($dto->receiveNotifications);
+
+        $array = $dto->toArray();
+
+        $this->assertTrue($array['receive_notifications'] === 'False');
     }
 }

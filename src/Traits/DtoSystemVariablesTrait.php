@@ -69,7 +69,7 @@ trait DtoSystemVariablesTrait
      * @var array|string[]
      */
     protected static array $__eventsNames = [
-        'creating', 'created', 'updating', 'updated', 'mutated', 'mutating', 'serialize', 'unserialize',
+        'creating', 'created', 'updating', 'updated', 'serialize', 'unserialize',
         'clone', 'fromModel', 'fromEmpty', 'fromArray', 'fromRequest', 'fromJson', 'fromSerialize',
         'prepareModel', 'prepareSerialize', 'prepareJson', 'prepareRequest', 'prepareArray', 'prepareEmpty',
         'destruct'
@@ -130,13 +130,6 @@ trait DtoSystemVariablesTrait
      * @var array
      */
     protected static array $__constructorParameters = [];
-
-    /**
-     * Marker for strict to array
-     *
-     * @var bool
-     */
-    protected static bool $__strictToArray = false;
 
     /**
      * Extended list parameters

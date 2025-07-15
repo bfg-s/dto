@@ -147,7 +147,6 @@ trait DtoMagicTrait
     public function __serialize(): array
     {
         $start = static::startTime();
-        static::$__strictToArray = true;
         $result = static::fireEvent('serialize', $this->vars(), static::SET_CURRENT_DATA, $this);
         foreach ($result as $key => $item) {
             if ($item instanceof Dto) {
