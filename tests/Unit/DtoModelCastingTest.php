@@ -172,6 +172,6 @@ class DtoModelCastingTest extends TestCase
         $method = $refUser->getMethod('mergeAttributesFromCachedCasts');
         $method->setAccessible(true);
         $method->invoke($user);
-        $this->assertTrue($user->syncOriginal()->getRawOriginal('test5') === '[1,2,"John Doe",3,4]');
+        $this->assertTrue($user->syncOriginal()->getRawOriginal('test5') === '[1,2,{"name":"John Doe"},3,4]');
     }
 }

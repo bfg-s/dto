@@ -19,41 +19,24 @@ trait DtoToImportTrait
         $importType = static::getImportType($this);
         $type = data_get($importType, 'type');
         $args = data_get($importType, 'args', []);
-        if (isset($importType['manual']) && $importType['manual']) {
-            $method = (str_starts_with($type, 'to') ? '' : 'to') . Str::studly($type);
-            if (method_exists($this, $method)) {
-                $args = isset($importType['args']) && $importType['args'] ? $importType['args'] : [];
-                $result = $this->{$method}(...$args);
-                if (! is_string($result)) {
-                    throw new \RuntimeException(sprintf(
-                        'Method %s in class %s for import type %s must return a string.',
-                        $method,
-                        static::class,
-                        $type
-                    ));
-                }
-                return $result;
-            } else {
-                throw new \RuntimeException(sprintf(
-                    'Method %s does not exist in class %s for import type %s.',
-                    $method,
-                    static::class,
-                    $type
-                ));
-            }
-        }
+        $source = data_get($importType, 'source', static::$source);
         if ($type === 'url') {
-            return data_get($importType, 'source', static::$source);
-        } else if ($type === 'serializeDto') {
-            return $this->toSerialize();
+            return $source;
         } else if ($type === 'serializeAny') {
             return serialize($this->toArray());
-        } elseif ($type === 'string') {
-            return (string) $this->toString(...$args);
-        } elseif ($type === 'numeric') {
-            return $this->toNumeric();
+        }
+        $method = (str_starts_with($type, 'to') ? '' : 'to') . Str::studly($type);
+        if (method_exists($this, $method)) {
+            return $this->{$method}(...$args);
+        } else if ($source) {
+            return $source;
         } else {
-            return $this->toJson(JSON_UNESCAPED_UNICODE);
+            throw new \RuntimeException(sprintf(
+                'Method %s does not exist in class %s for import type %s.',
+                $method,
+                static::class,
+                $type
+            ));
         }
     }
 }

@@ -402,7 +402,7 @@ trait DtoConstructorTrait
         if ($dto instanceof Dto || $dto instanceof DtoCollection) {
             static::$__models[static::class][spl_object_id($dto)] = $model;
             $dto->log('createdFromSerialize', ms: static::endTime($start));
-            $dto::setImportType('serializeDto', $serialize, instance: $dto);
+            $dto::setImportType('serialize', $serialize, instance: $dto);
             $return = $dto;
         } else {
             $return = static::from($dto, $model);
@@ -639,32 +639,51 @@ trait DtoConstructorTrait
      * Create a new instance from a string
      *
      * @param  string  $string
-     * @param  string|null  $separator
      * @param  TModel|Model|null  $model
      * @return DtoCollection<int, static<TModel>>|static<TModel>
      */
-    public static function fromString(string $string, string|null $separator = null, Model|null $model = null): DtoCollection|static
+    public static function fromString(string $string, Model|null $model = null): DtoCollection|static
     {
-        if ($separator !== null) {
-            $data = explode($separator, $string);
-            $dto = static::new(...$data, __model: $model);
-            $dto::setImportType('string', $string, args: compact('separator'), instance: $dto);
-            return $dto;
-        }
-
         if (static::isJson($string)) {
             return static::fromJson($string, $model);
         } elseif (static::isSerialize($string)) {
             return static::fromSerialize($string, $model);
-        } elseif (class_exists($string)) {
+        } elseif (strlen($string) <= 1024 && class_exists($string)) {
             return static::fromClassString($string, $model);
-        } elseif (filter_var($string, FILTER_VALIDATE_URL) !== false) {
+        } elseif (strlen($string) <= 30000 && filter_var($string, FILTER_VALIDATE_URL) !== false) {
             return static::fromUrl($string, $model);
         }
 
-        $string = explode('|', $string);
+        $dto = static::new($string, __model: $model);
+        $dto::setImportType('string', $string, instance: $dto);
+        return $dto;
+    }
+
+    public static function fromLineValues(string $line, string $separator = '|', Model|null $model = null): static
+    {
+        $string = explode($separator, $line);
         $dto = static::new(...$string, __model: $model);
-        $dto::setImportType('string', $string, args: ['separator' => '|'], instance: $dto);
+        $dto::setImportType('LineValues', $string, args: compact('separator'), instance: $dto);
+        return $dto;
+    }
+
+    public static function fromKeyValueLines(
+        string $lines,
+        string $lineSeparator = ':',
+        string $nextLineSeparator = PHP_EOL,
+        Model|null $model = null
+    ): static {
+        $assoc = [];
+        foreach (explode($nextLineSeparator, $lines) as $line) {
+            [$key, $value] = explode($lineSeparator, $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            if ($key !== '' && $value !== '') {
+                $assoc[$key] = $value;
+            }
+        }
+        $dto = $assoc ? static::fromAssoc($assoc, $model) : static::fromEmpty(model: $model);
+        $dto::setImportType('KeyValueLines', $lines, args: compact('lineSeparator', 'nextLineSeparator'), instance: $dto);
         return $dto;
     }
 
