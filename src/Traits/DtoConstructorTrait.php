@@ -675,11 +675,13 @@ trait DtoConstructorTrait
     ): static {
         $assoc = [];
         foreach (explode($nextLineSeparator, $lines) as $line) {
-            [$key, $value] = explode($lineSeparator, $line, 2);
-            $key = trim($key);
-            $value = trim($value);
-            if ($key !== '' && $value !== '') {
-                $assoc[$key] = $value;
+            if (str_contains($line, $lineSeparator)) {
+                [$key, $value] = explode($lineSeparator, $line, 2);
+                $key = trim($key);
+                $value = trim($value);
+                if ($key !== '' && $value !== '') {
+                    $assoc[$key] = $value;
+                }
             }
         }
         $dto = $assoc ? static::fromAssoc($assoc, $model) : static::fromEmpty(model: $model);
