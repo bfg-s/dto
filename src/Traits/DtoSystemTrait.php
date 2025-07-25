@@ -44,12 +44,12 @@ trait DtoSystemTrait
      * Set the default callback for a field
      *
      * @param  string  $field
-     * @param  callable  $callback
+     * @param  callable|mixed  $value
      * @return void
      */
-    public static function default(string $field, callable $callback): void
+    public static function default(string $field, mixed $value): void
     {
-        static::$__defaultCallbacks[static::class][$field] = $callback;
+        static::$__defaultCallbacks[static::class][$field] = $value;
     }
 
     /**
@@ -362,7 +362,8 @@ trait DtoSystemTrait
     protected static function generateDefault(string $name, array $data): mixed
     {
         if (isset(static::$__defaultCallbacks[static::class][$name])) {
-            return call_user_func(static::$__defaultCallbacks[static::class][$name], $data);
+            $cb = static::$__defaultCallbacks[static::class][$name];
+            return is_callable($cb) ? call_user_func($cb, $data) : $cb;
         } else {
             $methodByDefault = 'default' . Str::studly($name);
             if (method_exists(static::class, $methodByDefault)) {
