@@ -169,4 +169,9 @@ trait DtoSystemVariablesTrait
      * @var array
      */
     protected static array $__importType = [];
+
+    /**
+     * @var array
+     */
+    protected static array $__defaultCallbacks = [];
 }

@@ -580,8 +580,7 @@ trait DtoConstructorTrait
                 }
             }
 
-            $methodByDefault = 'default' . Str::studly($name);
-            $methodByDefaultExists = method_exists(static::class, $methodByDefault);
+            $methodByDefaultExists = static::hasGenerateDefault($name);
 
             $allData = [
                 $name => $methodByDefaultExists ? null : ($parameter->isDefaultValueAvailable()
@@ -603,8 +602,7 @@ trait DtoConstructorTrait
                 }
             }
 
-            $value = $value === null && $methodByDefaultExists
-                ? static::$methodByDefault($data) : $value;
+            $value = $value === null ? static::generateDefault($name, $allData) : $value;
 
             $arguments[$name] = $value;
         }
@@ -616,9 +614,8 @@ trait DtoConstructorTrait
         foreach (static::$extends as $key => $types) {
             $types = is_array($types) ? $types : explode('|', $types);
             $type = $types[0];
-            $methodByDefault = 'default' . Str::studly($key);
             $allData = [
-                $key => in_array('null', $types) || method_exists(static::class, $methodByDefault)
+                $key => in_array('null', $types) || static::hasGenerateDefault($key)
                     ? null
                     : static::makeValueByType($type, $types),
                 ...$data,

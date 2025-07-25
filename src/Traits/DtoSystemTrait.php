@@ -41,6 +41,18 @@ trait DtoSystemTrait
     }
 
     /**
+     * Set the default callback for a field
+     *
+     * @param  string  $field
+     * @param  callable  $callback
+     * @return void
+     */
+    public static function default(string $field, callable $callback): void
+    {
+        static::$__defaultCallbacks[static::class][$field] = $callback;
+    }
+
+    /**
      * Set import type for the DTO
      *
      * @param  string  $type
@@ -253,12 +265,7 @@ trait DtoSystemTrait
                 : null;
         }
 
-        if ($value === null) {
-            $methodByDefault = 'default' . Str::studly($key);
-            if (method_exists(static::class, $methodByDefault)) {
-                $value = static::$methodByDefault($data);
-            }
-        }
+        $value = $value === null ? static::generateDefault($key, $data) : $value;
 
         if (! $isNullable && $value === null) {
             throw new DtoUndefinedArrayKeyException($nameInData . ($notFoundKeys ? ', ' . implode(', ', $notFoundKeys) : ''));
@@ -322,12 +329,7 @@ trait DtoSystemTrait
                 ? data_get($data, $nameInData)
                 : ($parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null);
         }
-        if ($value === null) {
-            $methodByDefault = 'default' . Str::studly($name);
-            if (method_exists(static::class, $methodByDefault)) {
-                $value = static::$methodByDefault($data);
-            }
-        }
+        $value = $value === null ? static::generateDefault($name, $data) : $value;
         if (
             $type->isBuiltin()
             && (
@@ -348,6 +350,38 @@ trait DtoSystemTrait
         }
 
         return [$name, $value];
+    }
+
+    /**
+     * Generate default value for a field
+     *
+     * @param  string  $name
+     * @param  array  $data
+     * @return mixed
+     */
+    protected static function generateDefault(string $name, array $data): mixed
+    {
+        if (isset(static::$__defaultCallbacks[static::class][$name])) {
+            return call_user_func(static::$__defaultCallbacks[static::class][$name], $data);
+        } else {
+            $methodByDefault = 'default' . Str::studly($name);
+            if (method_exists(static::class, $methodByDefault)) {
+                return static::$methodByDefault($data);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Check if a default value generator exists for a field
+     *
+     * @param  string  $name
+     * @return bool
+     */
+    protected static function hasGenerateDefault(string $name): bool
+    {
+        return isset(static::$__defaultCallbacks[static::class][$name])
+            || method_exists(static::class, 'default' . Str::studly($name));
     }
 
     /**
