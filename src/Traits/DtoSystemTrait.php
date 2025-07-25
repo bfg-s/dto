@@ -359,7 +359,7 @@ trait DtoSystemTrait
      * @param  array  $data
      * @return mixed
      */
-    protected static function generateDefault(string $name, array $data): mixed
+    protected static function generateDefault(string $name, array $data = []): mixed
     {
         if (isset(static::$__defaultCallbacks[static::class][$name])) {
             $cb = static::$__defaultCallbacks[static::class][$name];
@@ -370,7 +370,7 @@ trait DtoSystemTrait
                 return static::$methodByDefault($data);
             }
         }
-        return null;
+        return $data[$name] ?? null;
     }
 
     /**
