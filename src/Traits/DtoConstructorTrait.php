@@ -544,85 +544,11 @@ trait DtoConstructorTrait
     {
         $start = static::startTime();
 
-        $arguments = static::fireEvent('prepareEmpty', [], static::class);
+        $data = static::fireEvent('prepareEmpty', $data, static::class);
 
-        foreach (static::getConstructorParameters() as $parameter) {
-            $type = $parameter->getType();
-            $name = $parameter->getName();
-            $value = null;
+        $data = static::fireEvent('creating', $data, static::SET_CURRENT_DATA);
 
-            if (isset($arguments[$name])) {
-                continue;
-            }
-
-            if ($type instanceof \ReflectionUnionType) {
-                foreach ($type->getTypes() as $unionType) {
-                    if ($unionType->getName() === 'array') {
-                        $type = $unionType;
-                        break;
-                    } elseif (!$unionType->isBuiltin()) {
-                        $class = $unionType->getName();
-                        if (is_subclass_of($class, DtoCollection::class) || $class === DtoCollection::class) {
-                            $type = $unionType;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            $types = [];
-            if ($type instanceof \ReflectionUnionType) {
-                foreach ($type->getTypes() as $unionType) {
-                    if ($type instanceof \ReflectionUnionType) {
-                        $type = $unionType;
-                    }
-                    $types[] = $type->getName();
-                }
-            }
-
-            $methodByDefaultExists = static::hasGenerateDefault($name);
-
-            $allData = [
-                $name => $methodByDefaultExists ? null : ($parameter->isDefaultValueAvailable()
-                    ? $parameter->getDefaultValue()
-                    : (!$type->allowsNull()
-                        ? static::makeValueByType($type->getName(), $types)
-                        : null)),
-                ...$data
-            ];
-
-            [$name, $value] = static::createNameValueFromProperty($parameter, $allData, $model);
-
-            if (!$value && !$type->isBuiltin()) {
-                $class = $type->getName();
-                if (is_subclass_of($class, Dto::class)) {
-                    $value = $class::fromEmpty(model: $model);
-                } elseif (is_subclass_of($class, DtoCollection::class) || $class === DtoCollection::class) {
-                    $value = new $class();
-                }
-            }
-
-            $value = $value === null ? static::generateDefault($name, $allData) : $value;
-
-            $arguments[$name] = $value;
-        }
-
-        $arguments = static::fireEvent('creating', $arguments, static::SET_CURRENT_DATA);
-
-        $dto = new static(...$arguments);
-
-        foreach (static::$extends as $key => $types) {
-            $types = is_array($types) ? $types : explode('|', $types);
-            $type = $types[0];
-            $allData = [
-                $key => in_array('null', $types) || static::hasGenerateDefault($key)
-                    ? null
-                    : static::makeValueByType($type, $types),
-                ...$data,
-            ];
-            [$key, $value] = static::createNameValueFromExtendedProperty($key, $types, $allData);
-            static::$__parameters[static::class][spl_object_id($dto)][$key] = $value;
-        }
+        [$dto, $arguments] = static::makeInstanceFromArray($data, $model);
 
         static::fireEvent('created', [], $dto, $arguments);
         static::fireEvent('fromEmpty', [], $dto, $arguments);

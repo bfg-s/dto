@@ -137,14 +137,6 @@ trait DtoSystemTrait
             $data = $validator->validated();
         }
         $data = static::prepareData($data);
-        $created = [];
-        $constructorParameters = static::getConstructorParameters();
-        foreach ($constructorParameters as $parameter) {
-
-            [$name, $value] = static::createNameValueFromProperty($parameter, $data, $model);
-            $arguments[$name] = $value;
-            $created[$name] = $name;
-        }
 
         foreach (static::$extends as $key => $types) {
 
@@ -156,6 +148,17 @@ trait DtoSystemTrait
 
             [$name, $value] = static::createNameValueFromExtendedProperty($key, $types, $data, $model);
             $arguments[$name] = $value;
+            $data[$name] = $value;
+        }
+
+        $created = [];
+        $constructorParameters = static::getConstructorParameters();
+        foreach ($constructorParameters as $parameter) {
+
+            [$name, $value] = static::createNameValueFromProperty($parameter, $data, $model);
+            $arguments[$name] = $value;
+            $created[$name] = $name;
+            $data[$name] = $value;
         }
 
         foreach (static::$encrypted as $key) {
@@ -294,8 +297,7 @@ trait DtoSystemTrait
         $type = $parameter->getType();
         $name = $parameter->getName();
         static::fireEvent(['creating', $name], null, $data, $parameter);
-
-        [$type, $hasCollection, $hasArray] = static::detectType($type);
+        [$type, $hasCollection, $hasArray, $allowNull, $typeNames] = static::detectType($type);
         [$nameInData, $notFoundKeys, $isOtherParam, $data] = static::detectAttributes($data, $parameter);
         $valueInDataExists = dto_data_exists($data, $nameInData);
 
@@ -327,7 +329,9 @@ trait DtoSystemTrait
         } else {
             $value = $valueInDataExists
                 ? data_get($data, $nameInData)
-                : ($parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null);
+                : ($parameter->isDefaultValueAvailable()
+                    ? $parameter->getDefaultValue()
+                    : ($allowNull ? null : static::makeValueByType($type->getName(), $typeNames)));
         }
         $value = $value === null ? static::generateDefault($name, $data) : $value;
         if (
@@ -336,7 +340,7 @@ trait DtoSystemTrait
                 ! $valueInDataExists
                 && ! $parameter->isDefaultValueAvailable()
             )
-            && ! $type->allowsNull()
+            && ! $allowNull
             && $value === null
         ) {
             throw new DtoUndefinedArrayKeyException(
@@ -394,7 +398,15 @@ trait DtoSystemTrait
     ): mixed {
         $hasCollection = false;
         $hasArray = false;
+        $allowNull = false;
+        $typeNames = [];
         if ($type instanceof \ReflectionUnionType) {
+            $allowNull = $type->allowsNull();
+            foreach ($type->getTypes() as $unionType) {
+                if ($unionType instanceof \ReflectionNamedType) {
+                    $typeNames[] = $unionType->getName();
+                }
+            }
             foreach ($type->getTypes() as $unionType) {
                 if (! $unionType->isBuiltin()) {
                     $class = $unionType->getName();
@@ -411,9 +423,25 @@ trait DtoSystemTrait
                     }
                 }
             }
+        } else {
+            if ($type instanceof \ReflectionIntersectionType) {
+                $allowNull = $type->allowsNull();
+                foreach ($type->getTypes() as $intersectionType) {
+                    if ($intersectionType instanceof \ReflectionNamedType) {
+                        $typeNames[] = $intersectionType->getName();
+                    }
+                }
+                $type = $typeNames[0] ?? null;
+            } elseif ($type instanceof \ReflectionNamedType) {
+                $allowNull = $type->allowsNull();
+                $typeNames[] = $type->getName();
+            } else {
+                throw new \InvalidArgumentException('Unsupported type: ' . get_class($type));
+            }
         }
 
         if ($type instanceof \ReflectionUnionType) {
+            $allowNull = $type->allowsNull();
             foreach ($type->getTypes() as $unionType) {
                 $type = $unionType;
                 break;
@@ -429,7 +457,7 @@ trait DtoSystemTrait
             }
         }
 
-        return [$type, $hasCollection, $hasArray];
+        return [$type, $hasCollection, $hasArray, $allowNull, $typeNames];
     }
 
     protected static function detectAttributes(

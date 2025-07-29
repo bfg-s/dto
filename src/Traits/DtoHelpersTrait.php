@@ -358,6 +358,8 @@ trait DtoHelpersTrait
      */
     public function fill(array $attributes): static
     {
+        $data = $attributes;
+
         foreach (static::$encrypted as $key) {
 
             if (array_key_exists($key, $attributes)) {
@@ -369,24 +371,22 @@ trait DtoHelpersTrait
             }
         }
 
-        foreach (static::getConstructorParameters() as $parameter) {
-
-            $this->set(
-                ...static::createNameValueFromProperty($parameter, $attributes)
-            );
-
-            unset($attributes[$parameter->getName()]);
-        }
-
         foreach (static::$extends as $key => $types) {
 
             $types = is_array($types) ? $types : explode('|', $types);
 
-            $this->set(
-                ...static::createNameValueFromExtendedProperty($key, $types, $attributes)
-            );
-
+            [$name, $value] = static::createNameValueFromExtendedProperty($key, $types, $data);
+            $this->set($name, $value);
+            $data[$name] = $value;
             unset($attributes[$key]);
+        }
+
+        foreach (static::getConstructorParameters() as $parameter) {
+
+            [$name, $value] = static::createNameValueFromProperty($parameter, $data);
+            $this->set($name, $value);
+            $data[$name] = $value;
+            unset($attributes[$parameter->getName()]);
         }
 
         foreach ($attributes as $key => $value) {
