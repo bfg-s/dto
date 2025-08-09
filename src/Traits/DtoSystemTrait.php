@@ -770,14 +770,17 @@ trait DtoSystemTrait
                     $value = new $classCollection(json_decode($namedData, true));
                 }
             } else {
-                $value = new $classCollection();
-                if ($namedData) {
-                    if (is_iterable($namedData)) {
-                        foreach ($namedData as $item) {
-                            $value->push($class::from($item, $model));
-                        }
-                    } else {
+                if (is_iterable($namedData)) {
+                    $value = new $classCollection();
+                    foreach ($namedData as $item) {
+                        $value->push($class::from($item, $model));
+                    }
+                } else {
+                    if ($namedData) {
+                        $value = new $classCollection();
                         $value->push($class::from($namedData, $model));
+                    } else {
+                        $value = $allowsNull ? null : new $classCollection();
                     }
                 }
             }
