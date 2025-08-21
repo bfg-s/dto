@@ -232,7 +232,7 @@ trait DtoConstructorTrait
         if ($serialized) {
             $instance = unserialize($serialized);
             if ($instance instanceof static) {
-                static::$__models[static::class][spl_object_id($instance)] = $model;
+                $instance->setModel($model);
                 return $instance;
             }
         }
@@ -241,7 +241,7 @@ trait DtoConstructorTrait
             $result = call_user_func($callback);
 
             if ($result instanceof static) {
-                static::$__models[static::class][spl_object_id($result)] = $model;
+                $result->setModel($model);
                 return $result->cache();
             }
         }
@@ -379,7 +379,6 @@ trait DtoConstructorTrait
         $model = static::configureModel($model);
         $data = static::fireEvent('prepareModel', [], static::SET_CURRENT_DATA);
         [$dto, $arguments] = static::makeInstanceFromArray($data, $model);
-        static::$__models[static::class][spl_object_id($dto)] = $model;
         static::fireEvent('created', [], $dto, $arguments);
         static::fireEvent('fromModel', [], $dto, $arguments);
         $dto->log('createdFromModel', [], ms: static::endTime($start));
@@ -400,7 +399,7 @@ trait DtoConstructorTrait
         $dto = unserialize($serialize);
         static::fireEvent('fromSerialize', [], $dto);
         if ($dto instanceof Dto || $dto instanceof DtoCollection) {
-            static::$__models[static::class][spl_object_id($dto)] = $model;
+            $dto->setModel($model);
             $dto->log('createdFromSerialize', ms: static::endTime($start));
             $dto::setImportType('serialize', $serialize, instance: $dto);
             $return = $dto;

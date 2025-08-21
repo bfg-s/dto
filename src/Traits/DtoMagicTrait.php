@@ -187,7 +187,7 @@ trait DtoMagicTrait
         $this->setMeta($data['__meta'] ?? []);
         static::$__logs[static::class][spl_object_id($this)] = $data['__logs'] ?? [];
         if ($data['__model']) {
-            static::$__models[static::class][spl_object_id($this)] = unserialize(base64_decode($data['__model']));
+            $this->setModel(unserialize(base64_decode($data['__model'])));
         }
         unset($data['__meta'], $data['__logs'], $data['__model']);
         $data = static::fireEvent('unserialize', $data, static::SET_CURRENT_DATA, $this);

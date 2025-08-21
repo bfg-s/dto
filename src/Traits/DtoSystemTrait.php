@@ -41,6 +41,18 @@ trait DtoSystemTrait
     }
 
     /**
+     * @param  \Illuminate\Database\Eloquent\Model|null  $model
+     * @return $this
+     */
+    public function setModel(Model|null $model): static
+    {
+        if ($model) {
+            static::$__models[static::class][spl_object_id($this)] = $model;
+        }
+        return $this;
+    }
+
+    /**
      * Set the default callback for a field
      *
      * @param  string  $field
@@ -216,6 +228,8 @@ trait DtoSystemTrait
         }
 
         static::$__originals[static::class][spl_object_id($dto)] = $data;
+        $dto->setModel($model);
+
         return [$dto, $arguments];
     }
 
