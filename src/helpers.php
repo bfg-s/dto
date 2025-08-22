@@ -69,7 +69,7 @@ if (!function_exists('enum_value')) {
      * @template TDefault
      *
      */
-    function enum_value($value, callable $default = null)
+    function enum_value($value, callable|null $default = null)
     {
         return transform($value, fn($value) => match (true) {
             $value instanceof \BackedEnum => $value->value,
