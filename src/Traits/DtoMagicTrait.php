@@ -166,8 +166,12 @@ trait DtoMagicTrait
 
         $result['__meta'] = static::$__meta[static::class][spl_object_id($this)] ?? [];
         $result['__model'] = static::$__models[static::class][spl_object_id($this)] ?? null;
-        if ($result['__model']) {
-            $result['__model'] = base64_encode(serialize($result['__model']));
+        if (($model = $result['__model']) && $model instanceof Model) {
+            $result['__model'] = [
+                'class' => get_class($model),
+                'key_name' => $model->getKeyName(),
+                'key' => $model->getKey(),
+            ];
         }
         $this->log('serialized', ms: static::endTime($start));
         $result['__logs'] = static::$__logs[static::class][spl_object_id($this)] ?? [];
@@ -186,8 +190,11 @@ trait DtoMagicTrait
         $start = static::startTime();
         $this->setMeta($data['__meta'] ?? []);
         static::$__logs[static::class][spl_object_id($this)] = $data['__logs'] ?? [];
-        if ($data['__model']) {
-            $this->setModel(unserialize(base64_decode($data['__model'])));
+        if ($model = $data['__model']) {
+            if (is_array($model) && isset($model['class'], $model['key_name'], $model['key']) && class_exists($model['class'])) {
+                $class = $model['class'];
+                $this->setModel((new $class())->where($model['key_name'], $model['key'])->first());
+            }
         }
         unset($data['__meta'], $data['__logs'], $data['__model']);
         $data = static::fireEvent('unserialize', $data, static::SET_CURRENT_DATA, $this);
