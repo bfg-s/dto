@@ -8,6 +8,7 @@ use Bfg\Dto\Collections\DtoCollection;
 use Bfg\Dto\Default\DiagnoseDto;
 use Bfg\Dto\Default\LogsInnerDto;
 use Bfg\Dto\Dto;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\Cache;
@@ -975,5 +976,110 @@ trait DtoHelpersTrait
     {
         return (($collection && is_subclass_of($class, DtoCollection::class)) || ! $collection)
             || is_subclass_of($class, Dto::class);
+    }
+
+    /**
+     * Get the value of a property as an array.
+     *
+     * This method retrieves the value of the specified property and
+     * ensures it is returned as an array. If the property is already
+     * an array, it is returned as-is. If it implements the Arrayable
+     * interface, its toArray() method is called. Otherwise, the value
+     * is cast to an array.
+     *
+     * @param  non-empty-string  $key The property name to retrieve.
+     * @return array The property value as an array.
+     */
+    public function getAsArray(string $key): array
+    {
+        $value = $this->{$key};
+
+        if (is_array($value)) {
+            return $value;
+        }
+        if ($value instanceof Arrayable) {
+            return $value->toArray();
+        }
+        return (array) $value;
+    }
+
+    /**
+     * Get the value of a property as a string.
+     *
+     * This method retrieves the value of the specified property and
+     * ensures it is returned as a string. The value is converted to
+     * a string using the to_string() helper function.
+     *
+     * @param  non-empty-string  $key The property name to retrieve.
+     * @return string The property value as a string.
+     */
+    public function getAsString(string $key): string
+    {
+        $value = $this->{$key};
+
+        return dto_to_string($value);
+    }
+
+    /**
+     * Get the value of a property as a non-empty string.
+     *
+     * This method retrieves the value of the specified property and
+     * ensures it is returned as a non-empty string. If the value is
+     * an empty string, an InvalidArgumentException is thrown.
+     *
+     * @param  non-empty-string  $key The property name to retrieve.
+     * @return non-empty-string The property value as a non-empty string.
+     *
+     * @throws \InvalidArgumentException if the property value is an empty string.
+     */
+    public function getAsNonEmptyString(string $key): string
+    {
+        $value = $this->getAsString($key);
+        if ($value === '') {
+            throw new \InvalidArgumentException("The property '{$key}' cannot be an empty string.");
+        }
+        return $value;
+    }
+
+    /**
+     * Get the value of a property as an integer.
+     *
+     * This method retrieves the value of the specified property and
+     * ensures it is returned as an integer. If the value is a string,
+     * all non-digit characters are removed before casting to an integer.
+     *
+     * @param  non-empty-string  $key The property name to retrieve.
+     * @return int The property value as an integer.
+     */
+    public function getAsInt(string $key): int
+    {
+        $value = $this->{$key};
+
+        if (is_string($value)) {
+            $value = preg_replace('/\D/', '', $value);
+        }
+
+        return (int) $value;
+    }
+
+    /**
+     * Get the value of a property as a float.
+     *
+     * This method retrieves the value of the specified property and
+     * ensures it is returned as a float. If the value is a string,
+     * all non-digit and non-decimal characters are removed before casting to a float.
+     *
+     * @param  non-empty-string  $key The property name to retrieve.
+     * @return float The property value as a float.
+     */
+    public function getAsFloat(string $key): float
+    {
+        $value = $this->{$key};
+
+        if (is_string($value)) {
+            $value = preg_replace('/[^\d.]/', '', $value);
+        }
+
+        return (float) $value;
     }
 }

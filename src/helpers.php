@@ -97,6 +97,28 @@ if (!function_exists('is_assoc')) {
     }
 }
 
+if (! function_exists('dto_to_string')) {
+    /**
+     * Convert a value to a string representation.
+     *
+     * @param  mixed  $value
+     * @param  string  $default
+     * @return string
+     */
+    function dto_to_string(mixed $value, string $default = ''): string
+    {
+        if ($value instanceof BackedEnum) {
+            $value = $value->value;
+        }
+        $value = is_callable($value) ? call_user_func($value) : $value;
+        return is_scalar($value)
+            ? (string) $value
+            : (is_array($value) || is_object($value)
+                ? (json_encode($value, JSON_FORCE_OBJECT|JSON_UNESCAPED_UNICODE) ?: $default)
+                : $default);
+    }
+}
+
 if (!function_exists('dto_string_replace')) {
     /**
      * Invested tag replacement on the object values or array.
