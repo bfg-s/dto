@@ -992,7 +992,7 @@ trait DtoHelpersTrait
      */
     public function getAsArray(string $key): array
     {
-        $value = $this->{$key};
+        $value = $this->get($key);
 
         if (is_array($value)) {
             return $value;
@@ -1015,7 +1015,7 @@ trait DtoHelpersTrait
      */
     public function getAsString(string $key): string
     {
-        $value = $this->{$key};
+        $value = $this->get($key);
 
         return dto_to_string($value);
     }
@@ -1053,7 +1053,7 @@ trait DtoHelpersTrait
      */
     public function getAsInt(string $key): int
     {
-        $value = $this->{$key};
+        $value = $this->get($key);
 
         if (is_string($value)) {
             $value = preg_replace('/\D/', '', $value);
@@ -1074,7 +1074,7 @@ trait DtoHelpersTrait
      */
     public function getAsFloat(string $key): float
     {
-        $value = $this->{$key};
+        $value = $this->get($key);
 
         if (is_string($value)) {
             $value = preg_replace('/[^\d.]/', '', $value);
