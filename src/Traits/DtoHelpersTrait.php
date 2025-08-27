@@ -1000,7 +1000,7 @@ trait DtoHelpersTrait
         if ($value instanceof Arrayable) {
             return $value->toArray();
         }
-        return (array) $value;
+        return $value ? (array) $value : [];
     }
 
     /**
