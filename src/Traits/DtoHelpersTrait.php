@@ -1021,6 +1021,22 @@ trait DtoHelpersTrait
     }
 
     /**
+     * Get the value of a property as a string or null.
+     *
+     * This method retrieves the value of the specified property and
+     * ensures it is returned as a string. If the resulting string
+     * is empty, null is returned instead.
+     *
+     * @param  non-empty-string  $key The property name to retrieve.
+     * @return string|null The property value as a string or null if empty.
+     */
+    public function getAsStringOrNull(string $key): string|null
+    {
+        return ! empty($value = $this->getAsString($key))
+            ? $value : null;
+    }
+
+    /**
      * Get the value of a property as a non-empty string.
      *
      * This method retrieves the value of the specified property and
@@ -1063,6 +1079,25 @@ trait DtoHelpersTrait
     }
 
     /**
+     * Get the value of a property as an integer or null.
+     *
+     * This method retrieves the value of the specified property and
+     * ensures it is returned as an integer. If the value is a string,
+     * all non-digit characters are removed before casting to an integer.
+     * If the resulting value is empty, null is returned instead.
+     *
+     * @param  non-empty-string  $key The property name to retrieve.
+     * @return int|null The property value as an integer or null if empty.
+     */
+    public function getAsIntOrNull(string $key): int|null
+    {
+        $value = $this->getAsString($key);
+        $value = preg_replace('/\D/', '', $value);
+
+        return ! empty($value) ? (int) $value : null;
+    }
+
+    /**
      * Get the value of a property as a float.
      *
      * This method retrieves the value of the specified property and
@@ -1081,5 +1116,39 @@ trait DtoHelpersTrait
         }
 
         return (float) $value;
+    }
+
+    /**
+     * Get the value of a property as a float or null.
+     *
+     * This method retrieves the value of the specified property and
+     * ensures it is returned as a float. If the value is a string,
+     * all non-digit and non-decimal characters are removed before casting to a float.
+     * If the resulting value is empty, null is returned instead.
+     *
+     * @param  non-empty-string  $key The property name to retrieve.
+     * @return float|null The property value as a float or null if empty.
+     */
+    public function getAsFloatOrNull(string $key): float|null
+    {
+        $value = $this->getAsString($key);
+        $value = preg_replace('/[^\d.]/', '', $value);
+
+        return ! empty($value) ? (float) $value : null;
+    }
+
+    /**
+     * Get the value of a property as a boolean.
+     *
+     * This method retrieves the value of the specified property and
+     * ensures it is returned as a boolean. The value is evaluated using
+     * PHP's built-in filter_var function with the FILTER_VALIDATE_BOOLEAN flag.
+     *
+     * @param  non-empty-string  $key The property name to retrieve.
+     * @return bool The property value as a boolean.
+     */
+    public function getAsBool(string $key): bool
+    {
+        return !! $this->get($key);
     }
 }
