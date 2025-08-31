@@ -424,7 +424,7 @@ trait DtoHelpersTrait
      */
     public function count(): int
     {
-        return count($this->getPropertyNames());
+        return count($this->toArray());
     }
 
     /**
@@ -668,27 +668,30 @@ trait DtoHelpersTrait
     /**
      * Is property value empty.
      *
-     * @param  string  $key
+     * @param  string|null  $key
      * @return bool
      */
-    public function isEmpty(string $key): bool
+    public function isEmpty(string|null $key = null): bool
     {
-        $val = $this->get($key);
+        if ($key) {
+            $val = $this->get($key);
 
-        if ($val instanceof DtoCollection) {
-            return $val->isEmpty();
+            if ($val instanceof DtoCollection) {
+                return $val->isEmpty();
+            }
+
+            return empty($val);
         }
-
-        return empty($val);
+        return empty($this->toArray());
     }
 
     /**
      * Is property value not empty.
      *
-     * @param  string  $key
+     * @param  string|null  $key
      * @return bool
      */
-    public function isNotEmpty(string $key): bool
+    public function isNotEmpty(string|null $key = null): bool
     {
         return !$this->isEmpty($key);
     }
