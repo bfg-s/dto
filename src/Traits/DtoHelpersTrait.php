@@ -621,12 +621,13 @@ trait DtoHelpersTrait
      * Get property value.
      *
      * @param  string  $key
+     * @param  mixed|null  $default
      * @return mixed
      */
-    public function get(string $key): mixed
+    public function get(string $key, mixed $default = null): mixed
     {
         $start = static::startTime();
-        $value = $this->{$key} ?? (static::$__parameters[static::class][spl_object_id($this)][$key] ?? null);
+        $value = $this->{$key} ?? (static::$__parameters[static::class][spl_object_id($this)][$key] ?? $default);
         if (static::isEnumCastable($key)) {
             $value = static::setEnumCastableAttribute($key, $value);
         } elseif (static::isClassCastable($key)) {
