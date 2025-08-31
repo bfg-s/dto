@@ -359,40 +359,43 @@ trait DtoHelpersTrait
      */
     public function fill(array $attributes): static
     {
-        $data = $attributes;
+        if ($attributes) {
 
-        foreach (static::$encrypted as $key) {
+            $data = $attributes;
 
-            if (array_key_exists($key, $attributes)) {
-                try {
-                    $attributes[$key]
-                        = static::currentEncrypter()->decrypt($attributes[$key]);
-                } catch (\Throwable) {
+            foreach (static::$encrypted as $key) {
+
+                if (array_key_exists($key, $attributes)) {
+                    try {
+                        $attributes[$key]
+                            = static::currentEncrypter()->decrypt($attributes[$key]);
+                    } catch (\Throwable) {
+                    }
                 }
             }
-        }
 
-        foreach (static::$extends as $key => $types) {
+            foreach (static::$extends as $key => $types) {
 
-            $types = is_array($types) ? $types : explode('|', $types);
+                $types = is_array($types) ? $types : explode('|', $types);
 
-            [$name, $value] = static::createNameValueFromExtendedProperty($key, $types, $data);
-            $this->set($name, $value);
-            $data[$name] = $value;
-            unset($attributes[$key]);
-        }
+                [$name, $value] = static::createNameValueFromExtendedProperty($key, $types, $data);
+                $this->set($name, $value);
+                $data[$name] = $value;
+                unset($attributes[$key]);
+            }
 
-        foreach (static::getConstructorParameters() as $parameter) {
+            foreach (static::getConstructorParameters() as $parameter) {
 
-            [$name, $value] = static::createNameValueFromProperty($parameter, $data);
-            $this->set($name, $value);
-            $data[$name] = $value;
-            unset($attributes[$parameter->getName()]);
-        }
+                [$name, $value] = static::createNameValueFromProperty($parameter, $data);
+                $this->set($name, $value);
+                $data[$name] = $value;
+                unset($attributes[$parameter->getName()]);
+            }
 
-        foreach ($attributes as $key => $value) {
+            foreach ($attributes as $key => $value) {
 
-            $this->set($key, $value);
+                $this->set($key, $value);
+            }
         }
 
         return $this;
