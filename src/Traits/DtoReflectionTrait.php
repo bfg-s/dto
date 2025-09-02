@@ -77,15 +77,6 @@ trait DtoReflectionTrait
 
     public function vars(): array
     {
-        if (isset(static::$__vars[static::class][spl_object_id($this)])) {
-            foreach (static::$__vars[static::class][spl_object_id($this)] as $key => $var) {
-                static::$__vars[static::class][spl_object_id($this)][$key] = $this->{$key}
-                    ?? (static::$__parameters[static::class][spl_object_id($this)][$key] ?? null);
-            }
-
-            return static::$__vars[static::class][spl_object_id($this)];
-        }
-
         $reflection = static::reflection();
         $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
         $vars = [];
