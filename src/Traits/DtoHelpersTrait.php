@@ -586,7 +586,7 @@ trait DtoHelpersTrait
                     }
                 }
 
-                if (! $type->allowsNull() && ! $nullable) {
+                if ($type && ! $type->allowsNull() && ! $nullable) {
 
                     $type = $type->getName();
 
