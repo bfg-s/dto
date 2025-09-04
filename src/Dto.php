@@ -54,14 +54,14 @@ use IteratorAggregate;
  * @implements Jsonable<string, mixed>
  * @implements IteratorAggregate<string, mixed>
  *
- * @property string $dtoVersion    The version of the DTO.
- * @property array  $cast          The casting rules for DTO properties.
- * @property array  $hidden        The hidden properties.
- * @property array  $rules         The validation rules.
- * @property array  $ruleMessages  The validation rule messages.
- * @property array  $encrypted     The properties that should be encrypted.
- * @property string $dateFormat    The storage format for date columns.
- * @property bool   $logsEnabled   Indicates if logging is enabled for this DTO.
+ * @property string $dtoVersion             The version of the DTO.
+ * @property array  $dtoCast                The casting rules for DTO properties.
+ * @property array  $dtoHidden              The hidden properties.
+ * @property array  $dtoValidateRules       The validation rules.
+ * @property array  $dtoValidateMessages    The validation rule messages.
+ * @property array  $dtoEncrypted           The properties that should be encrypted.
+ * @property string $dtoDateFormat          The storage format for date columns.
+ * @property bool   $dtoLogsEnabled         Indicates if logging is enabled for this DTO.
  */
 #[AllowDynamicProperties]
 abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Castable, IteratorAggregate
@@ -120,49 +120,49 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Cas
      *
      * @var array
      */
-    protected static array $cast = [];
+    protected static array $dtoCast = [];
 
     /**
      * The hidden properties
      *
      * @var array
      */
-    protected static array $hidden = [];
+    protected static array $dtoHidden = [];
 
     /**
      * The validation rules
      *
      * @var array
      */
-    protected static array $rules = [];
+    protected static array $dtoValidateRules = [];
 
     /**
      * The validation rule messages
      *
      * @var array
      */
-    protected static array $ruleMessages = [];
+    protected static array $dtoValidateMessages = [];
 
     /**
      * The encrypted properties
      *
      * @var array
      */
-    protected static array $encrypted = [];
+    protected static array $dtoEncrypted = [];
 
     /**
      * The storage format of the date columns
      *
      * @var string
      */
-    protected static string $dateFormat = 'Y-m-d H:i:s';
+    protected static string $dtoDateFormat = 'Y-m-d H:i:s';
 
     /**
      * Is logs enabled
      *
      * @var bool
      */
-    protected static bool $logsEnabled = false;
+    protected static bool $dtoLogsEnabled = false;
 
     /**
      * Use post by default for anything constructor

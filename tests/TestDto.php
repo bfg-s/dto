@@ -14,7 +14,7 @@ class TestDto extends Dto
         'id' => ['int', 'null']
     ];
 
-    protected static array $cast = [
+    protected static array $dtoCast = [
         'number' => 'int',
     ];
 

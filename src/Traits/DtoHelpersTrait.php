@@ -363,7 +363,7 @@ trait DtoHelpersTrait
 
             $data = $attributes;
 
-            foreach (static::$encrypted as $key) {
+            foreach (static::$dtoEncrypted as $key) {
 
                 if (array_key_exists($key, $attributes)) {
                     try {

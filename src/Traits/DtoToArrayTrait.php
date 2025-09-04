@@ -58,7 +58,7 @@ trait DtoToArrayTrait
         foreach ($parameters as $parameter) {
             $key = $parameter->getName();
             $originalKey = $parameter->getName();
-            if (in_array($key, static::$hidden)) {
+            if (in_array($key, static::$dtoHidden)) {
                 continue;
             }
             if ($keysOnly && ! in_array($key, $keysOnly)) {
@@ -166,7 +166,7 @@ trait DtoToArrayTrait
 
         foreach (static::$extends as $key => $types) {
             $originalKey = $key;
-            if (in_array($key, static::$hidden)) {
+            if (in_array($key, static::$dtoHidden)) {
                 continue;
             }
             if ($keysOnly && ! in_array($key, $keysOnly)) {
@@ -302,7 +302,7 @@ trait DtoToArrayTrait
         // Dynamically add extends properties
         foreach (get_object_vars($this) as $key => $value) {
             if (! isset($result[$key]) && ! in_array($key, $paramNames)) {
-                if (in_array($key, static::$hidden)) {
+                if (in_array($key, static::$dtoHidden)) {
                     continue;
                 }
                 if ($keysOnly && ! in_array($key, $keysOnly)) {
@@ -314,14 +314,14 @@ trait DtoToArrayTrait
                 } elseif ($value instanceof Model) {
                     $result[$key] = $value->id;
                 } elseif ($value instanceof Carbon) {
-                    $result[$key] = $value->format(static::$dateFormat);
+                    $result[$key] = $value->format(static::$dtoDateFormat);
                 } else {
                     $result[$key] = $value;
                 }
             }
         }
 
-        foreach (static::$encrypted as $key) {
+        foreach (static::$dtoEncrypted as $key) {
 
             if (array_key_exists($key, $result)) {
                 $result[$key]
@@ -388,7 +388,7 @@ trait DtoToArrayTrait
             $value = $value->toArray();
         }
         if ($value instanceof Carbon) {
-            $value = $value->format(static::$dateFormat);
+            $value = $value->format(static::$dtoDateFormat);
         }
 
         return $value;

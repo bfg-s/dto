@@ -65,7 +65,7 @@ trait DtoCastingTrait
             case 'double':
                 return static::fromFloat($value);
             case 'decimal':
-                return static::asDecimal($value, (int) explode(':', static::$cast[$key], 2)[1]);
+                return static::asDecimal($value, (int) explode(':', static::$dtoCast[$key], 2)[1]);
             case 'string':
                 return (string) $value;
             case 'bool':
@@ -148,7 +148,7 @@ trait DtoCastingTrait
      */
     protected static function setEnumCastableAttribute(string $key, \UnitEnum|int|string|null $value): mixed
     {
-        $enumClass = static::$cast[$key];
+        $enumClass = static::$dtoCast[$key];
 
         if (! isset($value)) {
             return null;
@@ -217,7 +217,7 @@ trait DtoCastingTrait
      */
     protected static function resolveCasterClass(string $key): mixed
     {
-        $castType = static::$cast[$key];
+        $castType = static::$dtoCast[$key];
 
         $arguments = [];
 
@@ -249,7 +249,7 @@ trait DtoCastingTrait
      */
     protected static function isClassCastable(string $key): bool
     {
-        $casts = static::$cast;
+        $casts = static::$dtoCast;
 
         if (! array_key_exists($key, $casts)) {
             return false;
@@ -294,7 +294,7 @@ trait DtoCastingTrait
             return null;
         }
 
-        $castType = static::$cast[$key];
+        $castType = static::$dtoCast[$key];
 
         if ($value instanceof $castType) {
             return $value;
@@ -311,7 +311,7 @@ trait DtoCastingTrait
      */
     protected static function isEnumCastable(string $key): bool
     {
-        $casts = static::$cast;
+        $casts = static::$dtoCast;
 
         if (! array_key_exists($key, $casts)) {
             return false;
@@ -374,7 +374,7 @@ trait DtoCastingTrait
             return Date::instance(Carbon::createFromFormat('Y-m-d', $value)->startOfDay());
         }
 
-        $format = static::$dateFormat;
+        $format = static::$dtoDateFormat;
 
         // Finally, we will just assume this date is in the format used by default on
         // the database connection and use that format to create the Carbon object
@@ -492,7 +492,7 @@ trait DtoCastingTrait
         }
 
         if (! isset($castType)) {
-            $castType = static::$cast[$name] ?? null;
+            $castType = static::$dtoCast[$name] ?? null;
         }
 
         if ($castType && static::isCustomDateTimeCast($castType)) {
@@ -565,7 +565,7 @@ trait DtoCastingTrait
      */
     protected static function hasCast(string $key, array|string $types = null): bool
     {
-        if (array_key_exists($key, static::$cast)) {
+        if (array_key_exists($key, static::$dtoCast)) {
             return !$types || in_array(static::getCastType($key), (array) $types, true);
         }
 

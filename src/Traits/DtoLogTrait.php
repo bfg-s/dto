@@ -30,7 +30,7 @@ trait DtoLogTrait
      */
     public function log(string $message, array $context = [], int|float $ms = 0): static
     {
-        if (static::$logsEnabled && ! static::$__logMute) {
+        if (static::$dtoLogsEnabled && ! static::$__logMute) {
 
             static::$__logs[static::class][spl_object_id($this)][] = [
                 'message' => $message,

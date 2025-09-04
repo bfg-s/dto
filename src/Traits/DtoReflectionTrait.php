@@ -22,7 +22,7 @@ trait DtoReflectionTrait
         return ExplainDto::fromArray([
             'name' => static::class,
             'ver' => static::$dtoVersion,
-            'logsIsEnabled' => static::$logsEnabled,
+            'logsIsEnabled' => static::$dtoLogsEnabled,
             'meta' => static::$__meta[static::class][spl_object_id($this)] ?? [],
             'properties' => collect(static::getConstructorParameters())->map(function ($parameter) {
 
@@ -34,13 +34,13 @@ trait DtoReflectionTrait
                 }
                 return [
                     'name' => $parameter->getName(),
-                    'casting' => static::$cast[$parameter->getName()] ?? null,
+                    'casting' => static::$dtoCast[$parameter->getName()] ?? null,
                     'type' => $types ?? $parameter->getType()?->getName(),
                     'default' => $parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null,
                     'nullable' => $parameter->allowsNull(),
-                    'isEncrypted' => in_array($parameter->getName(), static::$encrypted),
-                    'isHidden' => in_array($parameter->getName(), static::$hidden),
-                    'rule' => static::$rules[$parameter->getName()] ?? null,
+                    'isEncrypted' => in_array($parameter->getName(), static::$dtoEncrypted),
+                    'isHidden' => in_array($parameter->getName(), static::$dtoHidden),
+                    'rule' => static::$dtoValidateRules[$parameter->getName()] ?? null,
                     'value' => $this->{$parameter->getName()},
                 ];
             })->merge(collect(static::$extends)->map(function (string|array $types, string $key) {
@@ -48,13 +48,13 @@ trait DtoReflectionTrait
 
                 return [
                     'name' => $key,
-                    'casting' => static::$cast[$key] ?? null,
+                    'casting' => static::$dtoCast[$key] ?? null,
                     'type' => $types,
                     'default' => null,
                     'nullable' => in_array('null', $types),
-                    'isEncrypted' => in_array($key, static::$encrypted),
-                    'isHidden' => in_array($key, static::$hidden),
-                    'rule' => static::$rules[$key] ?? null,
+                    'isEncrypted' => in_array($key, static::$dtoEncrypted),
+                    'isHidden' => in_array($key, static::$dtoHidden),
+                    'rule' => static::$dtoValidateRules[$key] ?? null,
                     'value' => static::$__parameters[static::class][spl_object_id($this)][$key] ?? null,
                 ];
             }))->toArray(),

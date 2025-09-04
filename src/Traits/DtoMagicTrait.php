@@ -154,7 +154,7 @@ trait DtoMagicTrait
             } elseif ($item instanceof DtoCollection) {
                 $result[$key] = $item->toSerialize();
             } elseif ($item instanceof Carbon) {
-                $result[$key] = $item->format((string) static::$dateFormat);
+                $result[$key] = $item->format((string) static::$dtoDateFormat);
             } elseif ($item instanceof Model) {
                 $result[$key] = $item->id;
             } elseif (is_object($item)) {
@@ -213,7 +213,7 @@ trait DtoMagicTrait
     {
         $add = [];
 
-        if (static::$logsEnabled) {
+        if (static::$dtoLogsEnabled) {
 
             $add['logs'] = $this->logs();
         }
