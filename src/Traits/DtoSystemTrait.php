@@ -806,7 +806,7 @@ trait DtoSystemTrait
                 }
             }
         } else {
-            $value = $class::from($namedData, $model);
+            $value = $allowsNull && ! $namedData ? null : $class::from($namedData, $model);
         }
 
         return $value ?? null;
