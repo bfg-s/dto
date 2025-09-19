@@ -70,7 +70,7 @@ class MakeDtoCommand extends GeneratorCommand
      */
     protected function buildClass($name): string
     {
-        $dto = class_basename(Str::ucfirst(str_replace('Dto', '', $name)));
+        $dto = class_basename(Str::studly($name));
 
         $namespace = $this->getNamespace(
             Str::replaceFirst($this->rootNamespace(), 'App\\Dto\\', $this->qualifyClass($this->getNameInput()))
