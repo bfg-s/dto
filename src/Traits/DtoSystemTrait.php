@@ -669,7 +669,16 @@ trait DtoSystemTrait
         $valueInDataExists = dto_data_exists($data, $nameInData);
         $dataValue = data_get($data, $nameInData);
 
-        if (! is_subclass_of($class, Carbon::class) && $class !== Carbon::class) {
+        if (is_subclass_of($class, \BackedEnum::class)) {
+            if ($valueInDataExists) {
+                $value = $class::tryFrom($dataValue);
+                if (! $value) {
+                    $value = $class::from($dataValue);
+                }
+            } else {
+                $value = null;
+            }
+        } elseif (! is_subclass_of($class, Carbon::class) && $class !== Carbon::class) {
             if (is_subclass_of($class, DtoCollection::class) || $class === DtoCollection::class) {
                 $value = new $class($dataValue);
             } elseif (
