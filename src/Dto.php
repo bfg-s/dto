@@ -189,7 +189,7 @@ abstract class Dto implements DtoContract, Arrayable, Jsonable, ArrayAccess, Cas
      *
      * @var string|null
      */
-    protected static string|null $source = null;
+    protected static string|null $__source = null;
 
     /**
      * Handle dynamic method calls.

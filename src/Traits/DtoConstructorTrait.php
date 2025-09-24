@@ -201,7 +201,7 @@ trait DtoConstructorTrait
      */
     public static function fromHttp(string $method, string $url, Model|null $model = null): DtoCollection|static
     {
-        static::$source = $url;
+        static::$__source = $url;
         $method = strtolower($method);
         if (!in_array($method, ['get', 'head', 'post', 'put', 'patch', 'delete'])) {
             $method = 'get';

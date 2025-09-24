@@ -19,7 +19,7 @@ trait DtoToImportTrait
         $importType = static::getImportType($this);
         $type = data_get($importType, 'type');
         $args = data_get($importType, 'args', []);
-        $source = data_get($importType, 'source', static::$source);
+        $source = data_get($importType, 'source', static::$__source);
         if ($type === 'url') {
             return $source;
         } else if ($type === 'serializeAny') {

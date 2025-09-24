@@ -30,7 +30,7 @@ trait DtoCastUsingTrait
      */
     public static function castUsing(array $arguments): CastsAttributes
     {
-        return new class(static::class, static::$source) implements CastsAttributes
+        return new class(static::class, static::$__source) implements CastsAttributes
         {
             /**
              * @param  class-string<Dto>  $class
