@@ -671,9 +671,13 @@ trait DtoSystemTrait
 
         if (is_subclass_of($class, \BackedEnum::class)) {
             if ($valueInDataExists) {
-                $value = $class::tryFrom($dataValue);
-                if (! $value) {
-                    $value = $class::from($dataValue);
+                if ($dataValue instanceof $class) {
+                    $value = $dataValue;
+                } else {
+                    $value = $class::tryFrom($dataValue);
+                    if (! $value) {
+                        $value = $class::from($dataValue);
+                    }
                 }
             } else {
                 $value = null;
