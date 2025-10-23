@@ -282,7 +282,7 @@ trait DtoSystemTrait
                 : null;
         }
 
-        $value = empty($value) ? static::generateDefault($key, $data) : $value;
+        $value = empty($value) ? static::generateDefault($key, $data, $value) : $value;
 
         if (! $isNullable && $value === null) {
             throw new DtoUndefinedArrayKeyException($nameInData . ($notFoundKeys ? ', ' . implode(', ', $notFoundKeys) : ''));
@@ -347,7 +347,7 @@ trait DtoSystemTrait
                     ? $parameter->getDefaultValue()
                     : ($allowNull ? null : static::makeValueByType($type->getName(), $typeNames)));
         }
-        $value = empty($value) ? static::generateDefault($name, $data) : $value;
+        $value = empty($value) ? static::generateDefault($name, $data, $value) : $value;
         if (
             $type->isBuiltin()
             && (
@@ -377,7 +377,7 @@ trait DtoSystemTrait
      * @param  array  $data
      * @return mixed
      */
-    protected static function generateDefault(string $name, array $data = []): mixed
+    protected static function generateDefault(string $name, array $data = [], mixed $value = null): mixed
     {
         if (isset(static::$__defaultCallbacks[static::class][$name])) {
             $cb = static::$__defaultCallbacks[static::class][$name];
@@ -388,7 +388,7 @@ trait DtoSystemTrait
                 return static::$methodByDefault($data);
             }
         }
-        return $data[$name] ?? null;
+        return $value;
     }
 
     /**
