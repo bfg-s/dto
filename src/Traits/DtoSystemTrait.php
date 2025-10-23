@@ -282,7 +282,7 @@ trait DtoSystemTrait
                 : null;
         }
 
-        $value = $value === null ? static::generateDefault($key, $data) : $value;
+        $value = empty($value) ? static::generateDefault($key, $data) : $value;
 
         if (! $isNullable && $value === null) {
             throw new DtoUndefinedArrayKeyException($nameInData . ($notFoundKeys ? ', ' . implode(', ', $notFoundKeys) : ''));
@@ -347,7 +347,7 @@ trait DtoSystemTrait
                     ? $parameter->getDefaultValue()
                     : ($allowNull ? null : static::makeValueByType($type->getName(), $typeNames)));
         }
-        $value = $value === null ? static::generateDefault($name, $data) : $value;
+        $value = empty($value) ? static::generateDefault($name, $data) : $value;
         if (
             $type->isBuiltin()
             && (
