@@ -213,7 +213,6 @@ trait DtoCollectionMethodsTrait
     /**
      * @param $item
      * @return $this
-     * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
     public function add($item): static
     {
