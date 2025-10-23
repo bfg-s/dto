@@ -37,9 +37,7 @@ trait DtoMagicTrait
         if (array_key_exists($name, (array) static::$extends)) {
 
             $this->set($name, $value);
-        }
-
-        if (static::$allowDynamicProperties || ! count(static::getConstructorParameters())) {
+        } elseif (static::$allowDynamicProperties || ! count(static::getConstructorParameters())) {
             $this->{$name} = $value;
         } else {
             throw new DtoPropertyAreImmutableException();
