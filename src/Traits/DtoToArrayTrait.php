@@ -13,6 +13,7 @@ use Bfg\Dto\Attributes\DtoMapApi;
 use Bfg\Dto\Attributes\DtoMapFrom;
 use Bfg\Dto\Attributes\DtoMapTo;
 use Bfg\Dto\Attributes\DtoMutateTo;
+use Bfg\Dto\Attributes\DtoTemporal;
 use Bfg\Dto\Attributes\DtoToResource;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
@@ -71,6 +72,12 @@ trait DtoToArrayTrait
             $attributes = $parameter->getAttributes(DtoExceptProperty::class);
             if (count($attributes) > 0) {
                 continue;
+            }
+            if ($value === null) {
+                $attributes = $parameter->getAttributes(DtoTemporal::class);
+                if (count($attributes) > 0) {
+                    continue;
+                }
             }
             $attributes = $parameter->getAttributes(DtoToResource::class);
             foreach ($attributes as $attribute) {
@@ -198,6 +205,15 @@ trait DtoToArrayTrait
                 $instance = $attributes[0]->newInstance();
                 if ($instance->from === $key) {
                     continue;
+                }
+            }
+            if ($value === null) {
+                $attributes = $property->getAttributes(DtoTemporal::class);
+                if (count($attributes) > 0) {
+                    $instance = $attributes[0]->newInstance();
+                    if ($instance->from === $key) {
+                        continue;
+                    }
                 }
             }
             $attributes = $property->getAttributes(DtoToResource::class);
