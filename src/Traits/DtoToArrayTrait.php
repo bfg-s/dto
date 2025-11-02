@@ -67,6 +67,9 @@ trait DtoToArrayTrait
             }
             $paramNames[] = $key;
             $value = $this->{$key} ?? null;
+            if ($value instanceof \BackedEnum) {
+                $value = $value->value;
+            }
             $resource = null;
             $foreign = false;
             $attributes = $parameter->getAttributes(DtoExceptProperty::class);
