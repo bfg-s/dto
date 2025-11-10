@@ -576,6 +576,10 @@ trait DtoConstructorTrait
             return static::fromUrl($string, $model);
         }
 
+        if (trim($string, "\"' \n\r\t\v\0") === '') {
+            return static::fromEmpty(model: $model);
+        }
+
         $dto = static::new($string, __model: $model);
         $dto::setImportType('string', $string, instance: $dto);
         return $dto;
