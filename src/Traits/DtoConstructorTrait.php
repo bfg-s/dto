@@ -421,6 +421,9 @@ trait DtoConstructorTrait
     {
         $start = static::startTime();
         $data = $json ? json_decode($json, true) : [];
+        if (empty($data)) {
+            return static::fromEmpty(model: $model);
+        }
         if (!is_assoc($data)) {
             $return = static::fromCollection($data, $model);
         } else {
