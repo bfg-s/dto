@@ -319,11 +319,16 @@ trait DtoCastingTrait
 
         $castType = $casts[$key];
 
-        if (in_array($castType, static::$__primitiveCastTypes)) {
+        if (static::isPrimitiveType($castType)) {
             return false;
         }
 
         return enum_exists($castType);
+    }
+
+    public static function isPrimitiveType(string $type): bool
+    {
+        return in_array($type, static::$__primitiveCastTypes);
     }
 
     /**
