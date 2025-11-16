@@ -14,6 +14,7 @@ use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Database\Eloquent\Castable;
 use Illuminate\Contracts\Encryption\Encrypter;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection as BaseCollection;
@@ -74,10 +75,11 @@ trait DtoCastingTrait
             case 'object':
                 return static::fromJsonConvert($value, true);
             case 'array':
+                return static::toArrayCastConvert($value);
             case 'json':
                 return static::fromJsonConvert($value);
             case 'collection':
-                return new BaseCollection(static::fromJsonConvert($value));
+                return new BaseCollection(static::toArrayCastConvert($value));
             case 'date':
                 return static::asDate($value);
             case 'datetime':
@@ -101,6 +103,25 @@ trait DtoCastingTrait
         }
 
         return $value;
+    }
+
+    protected static function toArrayCastConvert(mixed $value): mixed
+    {
+        if ($value instanceof Arrayable) {
+            return $value->toArray();
+        } elseif (is_string($value)) {
+            if (static::isJson($value)) {
+                return static::fromJsonConvert($value);
+            } elseif (static::isSerialize($value)) {
+                return unserialize($value);
+            } else {
+                return preg_split('/\s*,\s*/', $value);
+            }
+        }
+        if (is_iterable($value)) {
+            return iterator_to_array($value);
+        }
+        return (array) $value;
     }
 
     /**
