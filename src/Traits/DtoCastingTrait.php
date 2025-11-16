@@ -109,6 +109,8 @@ trait DtoCastingTrait
     {
         if ($value instanceof Arrayable) {
             return $value->toArray();
+        } elseif ($value instanceof BaseCollection) {
+            return $value->all();
         } elseif (is_string($value)) {
             if (static::isJson($value)) {
                 return static::fromJsonConvert($value);
