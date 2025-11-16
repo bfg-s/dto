@@ -37,10 +37,6 @@ trait DtoCastingTrait
      */
     protected static function castAttribute(string $key, mixed $value, array $attributes = [], string $cast = null): mixed
     {
-        if (is_object($value) || is_array($value)) {
-
-            return $value;
-        }
         $castType = $cast ?: static::getCastType($key);
 
         if (!$castType) {
@@ -109,8 +105,6 @@ trait DtoCastingTrait
     {
         if ($value instanceof Arrayable) {
             return $value->toArray();
-        } elseif ($value instanceof BaseCollection) {
-            return $value->all();
         } elseif (is_string($value)) {
             if (static::isJson($value)) {
                 return static::fromJsonConvert($value);
