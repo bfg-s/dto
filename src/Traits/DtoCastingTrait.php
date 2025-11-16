@@ -103,7 +103,9 @@ trait DtoCastingTrait
 
     protected static function toArrayCastConvert(mixed $value): mixed
     {
-        if ($value instanceof Arrayable) {
+        if ($value instanceof BaseCollection) {
+            return $value->all();
+        } elseif ($value instanceof Arrayable) {
             return $value->toArray();
         } elseif (is_string($value)) {
             if (static::isJson($value)) {
