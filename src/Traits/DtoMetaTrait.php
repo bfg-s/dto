@@ -18,7 +18,7 @@ trait DtoMetaTrait
     public function setMeta(array|string $meta, mixed $value = null): static
     {
         if (is_string($meta)) {
-            $meta = [$meta => $value];
+            $meta = [$meta => value($value)];
         }
         static::$__meta[static::class][$this->dtoId()] = array_merge(
             static::$__meta[static::class][$this->dtoId()] ?? [],
@@ -60,8 +60,8 @@ trait DtoMetaTrait
     public function getMeta(string $key = null, mixed $default = null): mixed
     {
         return $key
-            ? (static::$__meta[static::class][$this->dtoId()][$key] ?? $default)
-            : (static::$__meta[static::class][$this->dtoId()] ?? $default);
+            ? (static::$__meta[static::class][$this->dtoId()][$key] ?? value($default, $key))
+            : (static::$__meta[static::class][$this->dtoId()] ?? value($default, $key));
     }
 
     /**
