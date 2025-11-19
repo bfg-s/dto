@@ -76,6 +76,11 @@ trait DtoHelpersTrait
             ->thenReturn();
     }
 
+    public function dtoId(): int
+    {
+        return spl_object_id($this);
+    }
+
     /**
      * @return TModel
      */

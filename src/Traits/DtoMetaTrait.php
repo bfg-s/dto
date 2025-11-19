@@ -6,22 +6,24 @@ namespace Bfg\Dto\Traits;
 
 trait DtoMetaTrait
 {
+
+
     /**
      * Set meta data
      *
-     * @param  array  $meta
+     * @param  array<string, mixed>|string  $meta
+     * @param  mixed|null  $value
      * @return $this
      */
-    public function setMeta(array $meta): static
+    public function setMeta(array|string $meta, mixed $value = null): static
     {
-        $start = static::startTime();
-
-        static::$__meta[static::class][spl_object_id($this)] = array_merge(
-            static::$__meta[static::class][spl_object_id($this)] ?? [],
+        if (is_string($meta)) {
+            $meta = [$meta => $value];
+        }
+        static::$__meta[static::class][$this->dtoId()] = array_merge(
+            static::$__meta[static::class][$this->dtoId()] ?? [],
             $meta
         );
-
-        $this->log('setMeta', $meta, static::endTime($start));
 
         return $this;
     }
@@ -34,9 +36,18 @@ trait DtoMetaTrait
      */
     public function unsetMeta(string $key): static
     {
-        $start = static::startTime();
-        unset(static::$__meta[static::class][spl_object_id($this)][$key]);
-        $this->log('unsetMeta', compact('key'), static::endTime($start));
+        unset(static::$__meta[static::class][$this->dtoId()][$key]);
+        return $this;
+    }
+
+    /**
+     * Clean all meta data
+     *
+     * @return $this
+     */
+    public function cleanMeta(): static
+    {
+        unset(static::$__meta[static::class][$this->dtoId()]);
         return $this;
     }
 
@@ -48,11 +59,19 @@ trait DtoMetaTrait
      */
     public function getMeta(string $key = null, mixed $default = null): mixed
     {
-        $start = static::startTime();
-        $result = $key
-            ? (static::$__meta[static::class][spl_object_id($this)][$key] ?? $default)
-            : (static::$__meta[static::class][spl_object_id($this)] ?? $default);
-        $this->log('getMeta', compact('key', 'result'), static::endTime($start));
-        return $result;
+        return $key
+            ? (static::$__meta[static::class][$this->dtoId()][$key] ?? $default)
+            : (static::$__meta[static::class][$this->dtoId()] ?? $default);
+    }
+
+    /**
+     * Has meta data
+     *
+     * @param  string  $key
+     * @return bool
+     */
+    public function hasMeta(string $key): bool
+    {
+        return isset(static::$__meta[static::class][$this->dtoId()][$key]);
     }
 }
