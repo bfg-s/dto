@@ -46,12 +46,12 @@ trait DtoMetaTrait
      * @param  string|null  $key
      * @return array|mixed|null
      */
-    public function getMeta(string $key = null): mixed
+    public function getMeta(string $key = null, mixed $default = null): mixed
     {
         $start = static::startTime();
         $result = $key
-            ? (static::$__meta[static::class][spl_object_id($this)][$key] ?? null)
-            : (static::$__meta[static::class][spl_object_id($this)] ?? []);
+            ? (static::$__meta[static::class][spl_object_id($this)][$key] ?? $default)
+            : (static::$__meta[static::class][spl_object_id($this)] ?? $default);
         $this->log('getMeta', compact('key', 'result'), static::endTime($start));
         return $result;
     }
