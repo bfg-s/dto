@@ -63,7 +63,10 @@ trait DtoToArrayTrait
                 continue;
             }
             if ($keysOnly && ! in_array($key, $keysOnly)) {
-                continue;
+                $attributes = $parameter->getAttributes(DtoMapFrom::class);
+                if (count($attributes) === 0) {
+                    continue;
+                }
             }
             $paramNames[] = $key;
             $value = $this->{$key} ?? null;

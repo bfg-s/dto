@@ -131,7 +131,10 @@ trait DtoHelpersTrait
      */
     public function requestedKeys(array $keys = []): static
     {
-        static::$__requestKeys[static::class][spl_object_id($this)] = $keys;
+        static::$__requestKeys[static::class][spl_object_id($this)] = array_merge(
+            static::$__requestKeys[static::class][spl_object_id($this)] ?? [],
+            $keys
+        );
 
         return $this;
     }
