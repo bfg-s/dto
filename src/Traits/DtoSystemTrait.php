@@ -683,7 +683,7 @@ trait DtoSystemTrait
                 $value = $valueInDataExists ? new $class($dataValue) : app($class);
             } else {
                 $value = $dataValue;
-                if (! $value && ! enum_exists($class)) {
+                if (! $value && ! enum_exists($class) && substr_count($class, '\\') > 0) {
                     $value = app($class);
                 }
             }
