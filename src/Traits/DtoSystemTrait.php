@@ -139,15 +139,6 @@ trait DtoSystemTrait
     protected static function makeInstanceFromArray(array $data, Model|null $model = null): array
     {
         $arguments = [];
-        $rules = array_merge(static::$dtoValidateRules, static::rules());
-        if ($rules) {
-            $messages = array_merge(static::$dtoValidateMessages, static::ruleMessages());
-            $validator = Validator::make($data, $rules, $messages);
-            if ($validator->fails()) {
-                throw new DtoValidationException($validator);
-            }
-            $data = $validator->validated();
-        }
         $data = static::prepareData($data);
 
         foreach (static::$extends as $key => $types) {

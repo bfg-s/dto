@@ -301,7 +301,7 @@ trait DtoHelpersTrait
     public function validate(array|null $rules = null, array $messages = []): bool
     {
         if (is_null($rules)) {
-            $rules = static::$dtoValidateRules;
+            $rules = array_merge(static::$dtoValidateRules, static::rules());
         }
 
         $validator = validator($this->toArray(), $rules, $messages);
