@@ -294,12 +294,16 @@ trait DtoHelpersTrait
     /**
      * Validate dto data by rules
      *
-     * @param  array  $rules
+     * @param  array|null  $rules
      * @param  array  $messages
      * @return bool
      */
-    public function validate(array $rules, array $messages = []): bool
+    public function validate(array|null $rules = null, array $messages = []): bool
     {
+        if (is_null($rules)) {
+            $rules = static::$dtoValidateRules;
+        }
+
         $validator = validator($this->toArray(), $rules, $messages);
 
         return $validator->fails();
