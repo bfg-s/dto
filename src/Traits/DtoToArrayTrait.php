@@ -25,6 +25,10 @@ use Illuminate\Support\Str;
 
 trait DtoToArrayTrait
 {
+    protected string $__keyPrepEnd = '';
+
+    protected string $__keyAppEnd = '';
+
     /**
      * @param  string  ...$keys
      * @return array
@@ -381,18 +385,27 @@ trait DtoToArrayTrait
             $result = $this->recursiveChangeKeyCaseFromArray($result, 'camel');
         }
 
+        if ($this->__keyAppEnd !== '') {
+            $result = $this->recursiveChangeKeyCaseFromArray($result, 'append', $this->__keyAppEnd);
+        }
+
+        if ($this->__keyPrepEnd !== '') {
+            $result = $this->recursiveChangeKeyCaseFromArray($result, 'prepend', $this->__keyPrepEnd);
+        }
+
         return $result;
     }
 
     /**
      * @param  array  $array
      * @param  string  $case
+     * @param  mixed  ...$arguments
      * @return array
      */
-    protected function recursiveChangeKeyCaseFromArray(array $array, string $case): array
+    protected function recursiveChangeKeyCaseFromArray(array $array, string $case, ...$arguments): array
     {
         return collect($array)->mapWithKeys(fn ($value, $key) => [
-            Str::of($key)->{$case}()->toString() => is_array($value) ? $this->recursiveChangeKeyCaseFromArray($value, $case) : $value
+            Str::of($key)->{$case}(...$arguments)->toString() => is_array($value) ? $this->recursiveChangeKeyCaseFromArray($value, $case) : $value
         ])->toArray();
     }
 
