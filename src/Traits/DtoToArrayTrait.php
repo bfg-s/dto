@@ -327,6 +327,9 @@ trait DtoToArrayTrait
 
         // Dynamically add extends properties
         foreach (get_object_vars($this) as $key => $value) {
+            if (str_starts_with($key, '__')) {
+                continue;
+            }
             if (! isset($result[$key]) && ! in_array($key, $paramNames)) {
                 if (in_array($key, static::$dtoHidden)) {
                     continue;
