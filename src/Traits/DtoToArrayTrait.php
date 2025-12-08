@@ -25,9 +25,9 @@ use Illuminate\Support\Str;
 
 trait DtoToArrayTrait
 {
-    protected string $__keyPrepEnd = '';
+    protected static string $__keyPrepEnd = '';
 
-    protected string $__keyAppEnd = '';
+    protected static string $__keyAppEnd = '';
 
     /**
      * @param  string  ...$keys
@@ -388,12 +388,12 @@ trait DtoToArrayTrait
             $result = $this->recursiveChangeKeyCaseFromArray($result, 'camel');
         }
 
-        if ($this->__keyAppEnd !== '') {
-            $result = $this->recursiveChangeKeyCaseFromArray($result, 'append', $this->__keyAppEnd);
+        if (static::$__keyAppEnd !== '') {
+            $result = $this->recursiveChangeKeyCaseFromArray($result, 'append', static::$__keyAppEnd);
         }
 
-        if ($this->__keyPrepEnd !== '') {
-            $result = $this->recursiveChangeKeyCaseFromArray($result, 'prepend', $this->__keyPrepEnd);
+        if (static::$__keyPrepEnd !== '') {
+            $result = $this->recursiveChangeKeyCaseFromArray($result, 'prepend', static::$__keyPrepEnd);
         }
 
         return $result;
