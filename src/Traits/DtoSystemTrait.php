@@ -809,6 +809,8 @@ trait DtoSystemTrait
                     $value[] = $class::from($item, $model);
                 }
             }
+        } elseif ($namedData instanceof Dto) {
+            $value = $namedData;
         } else {
             $value = $allowsNull && ! $namedData ? null : $class::from($namedData, $model);
         }

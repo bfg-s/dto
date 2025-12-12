@@ -335,6 +335,8 @@ trait DtoConstructorTrait
             if (! ($dto instanceof Dto)) {
                 throw new \InvalidArgumentException("Unsupported dto format: {$abstract}");
             }
+        } elseif ($dto::class === static::class) {
+            return $dto;
         }
         return static::fromArray($dto->toArray(), $model);
     }
