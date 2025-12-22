@@ -148,9 +148,9 @@ trait DtoMagicTrait
         $result = static::fireEvent('serialize', $this->vars(), static::SET_CURRENT_DATA, $this);
         foreach ($result as $key => $item) {
             if ($item instanceof Dto) {
-                $result[$key] = $item->toSerialize();
+                $result[$key] = $item->toArray();
             } elseif ($item instanceof DtoCollection) {
-                $result[$key] = $item->toSerialize();
+                $result[$key] = $item->toArray();
             } elseif ($item instanceof Carbon) {
                 $result[$key] = $item->format((string) static::$dtoDateFormat);
             } elseif ($item instanceof Model) {
