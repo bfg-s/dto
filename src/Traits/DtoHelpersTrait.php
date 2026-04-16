@@ -260,7 +260,7 @@ trait DtoHelpersTrait
      * @param  string|null  $key
      * @return void
      */
-    public static function cacheKeyClear(string $key = null): void
+    public static function cacheKeyClear(?string $key = null): void
     {
         Cache::forget(static::class . ($key ?: ''));
     }

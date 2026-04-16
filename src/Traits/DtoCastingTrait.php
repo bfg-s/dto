@@ -35,7 +35,7 @@ trait DtoCastingTrait
      * @param  string|null  $cast
      * @return mixed
      */
-    protected static function castAttribute(string $key, mixed $value, array $attributes = [], string $cast = null): mixed
+    protected static function castAttribute(string $key, mixed $value, array $attributes = [], ?string $cast = null): mixed
     {
         $castType = $cast ?: static::getCastType($key);
 
@@ -587,7 +587,7 @@ trait DtoCastingTrait
      * @param  array|string|null  $types
      * @return bool
      */
-    protected static function hasCast(string $key, array|string $types = null): bool
+    protected static function hasCast(string $key, array|string|null $types = null): bool
     {
         if (array_key_exists($key, static::$dtoCast)) {
             return !$types || in_array(static::getCastType($key), (array) $types, true);

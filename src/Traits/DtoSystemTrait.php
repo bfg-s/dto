@@ -235,7 +235,7 @@ trait DtoSystemTrait
      * @throws \Bfg\Dto\Exceptions\DtoModelBindingFailException
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    protected static function createNameValueFromExtendedProperty(string $key, array $types, array $data, Model $model = null): array
+    protected static function createNameValueFromExtendedProperty(string $key, array $types, array $data, ?Model $model = null): array
     {
         $type = $types[0];
         if (! $type) {
@@ -297,7 +297,7 @@ trait DtoSystemTrait
      * @throws \Bfg\Dto\Exceptions\DtoModelBindingFailException
      * @throws \Bfg\Dto\Exceptions\DtoUndefinedArrayKeyException
      */
-    protected static function createNameValueFromProperty(ReflectionParameter $parameter, array $data = [], Model $model = null): array
+    protected static function createNameValueFromProperty(ReflectionParameter $parameter, array $data = [], ?Model $model = null): array
     {
         $type = $parameter->getType();
         $name = $parameter->getName();
@@ -769,7 +769,7 @@ trait DtoSystemTrait
         Dto|string $class,
         array $data,
         bool $allowsNull,
-        Model $model = null,
+        ?Model $model = null,
         string|null $classCollection = null,
     ): mixed {
         $classCollection = is_subclass_of($classCollection, DtoCollection::class) || $class === DtoCollection::class

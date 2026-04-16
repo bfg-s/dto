@@ -57,7 +57,7 @@ trait DtoMetaTrait
      * @param  string|null  $key
      * @return array|mixed|null
      */
-    public function getMeta(string $key = null, mixed $default = null): mixed
+    public function getMeta(?string $key = null, mixed $default = null): mixed
     {
         return $key
             ? (static::$__meta[static::class][$this->dtoId()][$key] ?? value($default, $key))

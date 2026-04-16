@@ -318,7 +318,7 @@ trait DtoCollectionMethodsTrait
         return $this;
     }
 
-    public function getMeta(string $key = null): mixed
+    public function getMeta(?string $key = null): mixed
     {
         return $key ? ($this->meta[$key] ?? null) : $this->meta;
     }
